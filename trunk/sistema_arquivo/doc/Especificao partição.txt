@@ -1,0 +1,47 @@
+Boot:	setores 0 até 1
+SO:		setores 2 até 256
+Lista Setores Vazios: setor 257
+Dir:	setores 258 e 259 -- 64 diretórios no máximo -- diretório raiz é a primeira entrada
+Livre:	setores 260 - 4095
+
+typedef char[2] end_disco;
+
+struct mapa_paginas
+{
+       char tam[2];
+       end_disco endereço_disco[255];
+}
+
+struct descritor_arquivo
+{
+       char nome[12];
+       enum tipo_aqruivo tipo;
+       char prot;
+       end_disco mapa_pag;
+}
+16 bytes cada descritor de arquivo
+
+enum tipo_arquivo
+{
+       binário;
+       texto;
+       exe;
+       hpx;
+       obj;
+	   diretório;
+}
+
+struct bitmap_blocos_livres
+{
+       char sist_map[512];
+}
+
+struct descritor_arquivo diretorios[64];
+
+struct mapa_arquivos
+{
+       char quantidade[2];
+       end_disco self;
+       end_disco pai;
+       end_disco arquivos[253];
+}
