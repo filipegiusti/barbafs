@@ -1,16 +1,23 @@
-exec: fatorial.o main.o
-	gcc -Wall fatorial.o main.o -o fatorial
+CC = gcc
+CFLAGS = -Wall
+OBJS = src/fatorial.o
+SRCS = src/fatorial.c
+OBJS_TESTE = testes/teste_fatorial.o
+SRCS_TESTE = testes/teste_fatorial.c
 
-fatorial.o: 
+fatorial: $(OBJS) src/main.o
+	$(CC) $(CFLAGS) src/main.o $(OBJS) -o $@
 
-main.o:
+src/main.o:
 
-teste_fatorial.o: fatorial.o
-	gcc -Wall testes/teste_fatorial.c -c -o teste_fatorial.o
+$(OBJS):
 
-teste: teste_fatorial.o
-	gcc -Wall teste_fatorial.o -o testes/teste
-	./testes/teste
+$(OBJS_TESTE):
+
+teste: $(OBJS_TESTE) $(OBJS)
+	$(CC) $(OBJS_TESTE) $(OBJS) -lcheck -o $@
+	echo ============================================================\n
+	./teste
 
 clean: 
-	rm fatorial.o fatorial
+	rm -f $(OBJS) $(OBJS_TESTE) teste fatorial

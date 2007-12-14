@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "includes/fatorial.h"
+#include "../includes/fatorial.h"
 
 int main () {
         int num;
