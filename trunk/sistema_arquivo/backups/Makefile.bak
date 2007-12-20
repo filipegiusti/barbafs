@@ -1,0 +1,40 @@
+#OBJS = src/fatorial.o src/hformat.o
+#SRCS = src/fatorial.c src/hformat.c
+#OBJS_TESTE = testes/teste_hformat.o
+#SRCS_TESTE = testes/teste_hformat.c
+####################################
+
+CC = gcc
+CFLAGS = -Wall -g
+INCLUDE = -Iinclude/
+BASE_FATORIAL = src/fatorial/fatorial.c
+BASE_HFORMAT = src/hformat/hformat.c
+SRC_FATORIAL = $(BASE_FATORIAL).c
+OBJ_FATORIAL = $(BASE_FATORIAL).o
+SRC_HFORMAT = $(BASE_HFORMAT).c
+OBJ_HFORMAT = $(BASE_HFORMAT).o
+
+all: src/fatorial/fatorial.o 
+
+fatorial: src/fatorial/fatorial.o
+	make -C src/fatorial
+
+#fatorial: src/fatorial.o src/main.o
+#	$(CC) $(CFLAGS) src/main.o $(OBJS) -o $@
+
+#hformat: $(OBJS)
+#	$(CC) $(CFLAGS) $(OBJS) -o $@
+
+#src/main.o:
+
+#$(OBJS):
+
+#$(OBJS_TESTE):
+
+teste: $(OBJS_TESTE) $(OBJS)
+	$(CC) $(OBJS_TESTE) $(OBJS) -lcheck -o $@
+	echo ============================================================
+	./teste
+
+#clean: 
+#	rm -f $(OBJS) $(OBJS_TESTE) teste fatorial hformat src/main.o

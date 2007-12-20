@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../includes/fatorial.h"
+#include "fatorial.h"
 #include <check.h>
 
 void setup (void) {
