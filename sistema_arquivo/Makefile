@@ -1,26 +1,42 @@
 CC = gcc
-CFLAGS = -Wall
-OBJS = src/fatorial.o src/hformat.o
-SRCS = src/fatorial.c src/hformat.c
-OBJS_TESTE = testes/teste_hformat.o
-SRCS_TESTE = testes/teste_hformat.c
+CFLAGS = -Wall -g
+INCLUDE = -Iinclude/
+BASE_FATORIAL = src/fatorial/fatorial
+BASE_HFORMAT = src/hformat/hformat
+BASE_TESTE = testes/teste
+SRC_FATORIAL = $(BASE_FATORIAL).c
+OBJ_FATORIAL = $(BASE_FATORIAL).o
 
-fatorial: $(OBJS) src/main.o
-	$(CC) $(CFLAGS) src/main.o $(OBJS) -o $@
+SRC_HFORMAT = $(BASE_HFORMAT).c
+OBJ_HFORMAT = $(BASE_HFORMAT).o
 
-hformat: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+SRC_MAIN = src/main.c
+OBJ_MAIN = main.bin
 
-src/main.o:
+OBJS = $(OBJ_FATORIAL) 
 
-$(OBJS):
+SRC_TESTE = $(BASE_TESTE)_fatorial.c 
+OBJS_TESTE = $(BASE_TESTE).o 
 
-$(OBJS_TESTE):
+all: $(OBJS) hformat 
+	$(CC) $(CFLAGS) $(INCLUDE) $(OBJS) $(SRC_MAIN) -o bin/$(OBJ_MAIN)
 
-teste: $(OBJS_TESTE) $(OBJS)
-	$(CC) $(OBJS_TESTE) $(OBJS) -lcheck -o $@
-	echo ============================================================
+
+fatorial: src/fatorial/fatorial.o
+	make -C src/fatorial
+
+hformat:
+	make -C src/hformat
+	
+	
+teste: $(OBJS) 
+	$(CC) $(CFLAGS) -Iinclude/ $(OBJS) $(SRC_TESTE) -lcheck -o teste 
 	./teste
 
-clean: 
-	rm -f $(OBJS) $(OBJS_TESTE) teste fatorial hformat src/main.o
+clean:
+	rm -f *.o
+	rm -f *.bin
+	rm -f src/fatorial/*.o 
+	rm -f src/hformat/*.o 
+	rm -f src/hpsys/*.o 
+	rm -f teste

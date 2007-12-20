@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../includes/filesystem.h"
+#include "filesystem.h"
 #include <check.h>
 
 FILE *ptr_arquivo;
