@@ -1,0 +1,110 @@
+\chapter{Gerência de processos no UNIX}
+
+\section{Introdução}
+Um processo consiste básicamente em um programa em execução. Associado a cada processo o seu espaço de endereçamento e uma lista de memória que o processo pode ler e escrever.
+O sistema UNIX é um sistema multitaréfa e multiusário. Estas características tornam a presença de inumeros processo ativo concorrendo por recursos do sistema. Um espaço de endereçamento de um processo possui o programa executável, os dados do progama e sua pilha. Também é associado à um processo registradores, como apontadores de instrução, apontadores de pilha.
+
+\section{Estados de um processo}
+O Durante a execução, um processo pode sofrer diferentes ações, sendo por parte do usuário ou por parte do sistema. Sendo assim, um processo pode estar em diferentes estados, sendo eles:
+	Pronto permutado – Processo em estado pronto que está em disco.
+    Pronto na memória – Processo pronto na memória RAM.
+    Espera permutado – Processo bloqueado em disco.
+    Espera na memória – Processo bloqueado na memória.
+    Executando em modo usuário – Processo executando em modo usuário.
+    Executando em modo kernel – Processo executando em modo privilegiado.
+   Modo Zumbi – Processo Filho que chamou exit mas que seu pai ainda não chamou wait, então o processo se mantém no sistema esperando apenas que seu pai chame wait.
+
+\section{Criação de processos}
+A primitiva fork permite que um processo crie outro processo. Através de uma chamada à fork, um processo pai poderá criar um processo filho.
+Abertura de arquivos é compartilhada entre processo Pai e Filho, ou seja, se existia um arquivo aberto para o processo Pai antes do fork, esse mesmo arquivo estará aberto para o Filho. Qualquer alteração feita nesse arquivo será visível ao outro processo.
+Como os processos Pai e Filho são idênticos, surge o problema de saber que trecho de código o processo deve executar. Esse problema é resolvido com o retorno da chamada fork, que retorna um valor conhecido como PID (Process IDentifier): 0 para o processo Filho e um valor maior que 0 para o processo Pai.
+Quando um processo Filho quer saber seu PID, ele faz uma chamada de sistema getpid que irá fornecê-lo. 
+
+
+\section{Comunicação entre processos}
+O UNIX tem sete mecanismos para lidar com as comunicações inter-processos: memória compartilhada, rastreamento de processo, morte do filho, semáforos, mensagens, pipes e sinais de sincronização. A seguir, serão detalhados os quatro últimos.
+
+\subsection{Semáforos}
+Uma das primitivas mais utilizadas para a sincronização de taréfas concorrentes é o semáfaro. Ela esta disponível no ambiente UNIX, sendo que sua estrutura consiste em quatro partes: valor do semáforo; PID do último processo que operou sobre o semáforo; número de processos esperando que o valor do semáforo aumente; e número de processos esperando que o semáforo chegue a 0. Cada semáforo tem um cabeçalho e o UNIX organiza-os em uma matriz.
+
+\subsection{Mensagens}
+Através das primitivas msgsnd e msgrcv é possível que processos troquem mensagens, e desta forma estabeleçam uma comunicação
+
+\subsection{Pipes}
+Pipes ou dutos é um conceito interessante no ambiente UNIX. Dois processos podem se comunicar através de um duto. Tudo que é escrito por um processo de um lado do duto, pode ser lido pelo outro processo. A tentativa da leitura de um duto vazio causa o bloqueio do processo que tentou ler até o duto possuir informações.
+
+\subsection{Sinais de sincronização (signal)}
+A comunicação entre processos também pode ocorrer por Interrupções de software. Para isto existe a primitiva signal. Um processo pode dizer ao sistema o que deve acontecer quando recebe um signal. Pode-se ignorar, tratar o signal ou deixar que ele mate o processo (comportamento padrão). Se a escolha for tratar, deve haver uma subrotina de manipulação de signal, a qual recebe imediatamente o controle quando é recebido um signal. Quando a rotina de manipulação termina, devolve o controle para o processo anterior. Um processo pode apenas mandar signal para os membros do seu Process Group, que consiste no seu Pai, processos ancestrais, filhos e descendentes. 
+Signals são utilizados para outros propósitos também como lançamento de exceção. Por exemplo quando um processo tenta uma divisão por zero, o processo recebe um signal SIGFPE (Floating-Point Exception).
+
+
+\section{Chamadas de Sistema}
+Na tabela abaixo, as principais chamadas de sistema executadas para gerenciamento de processos em UNIX.
+	pid = fork()   
+	pid = waitpid()
+	s = execve()
+	exit()
+	s = kill()
+	s = sigaction()                    
+	s = sigreturn()
+	s = sigprocmask()
+	s = sigpending()
+	s = sigsuspend()               
+	residual = alarm()
+	s = pause( )
+
+Através destas chamas é possível criar processos, “matar” processos, modificar características dos processos e obter informações sobre um processo.
+
+\section{Threads}
+Em UNIX também são permitido a criação de processos leves, ou threads. As threads são disponibilizadas através de um padrão chamado POSIX Threads(ou pthreads). Este padrão permite que diferentes fluxos de execução possam ser executados de forma concorrente. A diferença básica entre processos e threads é que ao contrário da programação concorrente através de processos, quando utilizado com fork mantendo vários processos na memória, uma thread ocupa os dados globais de um processo, modificando apenas o conjunto de instruções que irá executar, assim como dados dos registradores que contolam a execução. Desta forma, um mesmo processo pode conter diferentes fluxos concorrente e todas as threads tem acesso a área de memória global do processo, podendo fazer a comunicação através de operações write/read na área compartilhada. Com o compartilhamento de memória, é necessário o controle ao acesso, logo, o padrão POSIX inclui primitivas para exclusão mútua e acesso condicional. Desta forma o programador pode controlar o acesso à memória global, evitando assim, erros que são comuns com este problema. Abaixo segue primitivas para manipulação de threads e controle de áreas compartilhadas na memória:
+
+
+
+	pthread_create()
+	pthread_exit
+	pthread_join
+	pthread_mutex_init
+	pthread_mutex_destroy
+	pthread_mutex_lock
+	pthread_mutex_unlock
+	pthread_cond_init
+	pthread_cond_destroy
+	pthread_cond_wait
+	pthread_cond_signal
+
+
+\section{Implementação de Processos em UNIX}
+Cada processo possui uma parte do usuário que roda o programa do usuário. Entretanto, quando uma de suas threads faz uma chamada de sistema, ela troca para o modo kernel e começa a execução no contexto do kernel, com um mapa de memória diferente e acesso completo a todos os recursos da máquina.
+Continua sendo a mesma thread, mas agora mais poderosa. O kernel mantém duas estruturas de dados chaves relacionadas a processos: a tabela de processos e a estrutura de usuário. A tabela de processos é residente todo o tempo e contém as informações necessárias a todos os processos, até mesmo aqueles que não estão presentes na memória. A estrutura de usuário é paginada quando seu processo associado não está na memória.
+A informação na tabela de processos podem ser classificadas nas seguintes categorias:
+1.Parâmetros de escalonamento. Prioridade de processo, quantidade de tempo de CPU consumida recentemente, quantidade de tempo dormindo recentemente. Juntos, estes atributos são usados para determinar qual processo será o próximo a ocupar a CPU.
+2.	Imagem da memória. Ponteiros para o código, dados e segmentos de pilha, ou se 	paginação está sendo usada, ponteiros para as tabelas de páginas. Se o segmento de 	código é compartilhado, o ponteiro de segmento aponta para a tabela de segmento 	compartilhada. Quando o processo não está na memória, informações de como achar suas 	partes no disco estão aqui também.
+3.	Signals. Máscaras mostram quais signals estão sendo ignorados, quais estão sendo 	capturados, quais estão temporariamente bloqueados e quais são os que estão para serem 	liberados. 
+
+4.	Miscellânea. Estado corrente do processo, evento pelo qual está esperando, PID, PID do 	processo pai, e identificação de usuário e grupo.
+
+A estrutura de usuário contém informação que não é necessária quando o processo não está fisicamente na memória. A informação contida na estrutura de usuário inclui os seguintes items:
+1.Registradores da máquina. Quando um trap muda para o modo kernel, os registradores da máquina (incluindo os de ponto-flutuante) são salvos aqui.
+2.Estado da chamada de sistema. Informação sobre a chamada de sistema corrente, incluindo os parâmetros e resultados.
+3.Tabela de descritores de arquivo. Quando uma chamada de sistema envolvendo um descritor de arquivo é invocada, o descritor de arquivo é  usado como índice dentro desta tabela para localizar a estrutura de dados  correspondente a este arquivo. 
+4.Contador. Ponteiro para uma tabela que mantém rastro do usuário e tempo de CPU usado pelo processo. Alguns sistemas também mantêm limites  aqui, como quantidade de tempo de CPU que o processo pode usar, tamanho máximo da pilha.
+5.Pilha do kernel. Uma pilha fixa usada pela parte que executa em modo kernel.
+
+Quando uma chamada fork é executada, o processo que a executou muda para o modo kernel e procura por um espaço livre na tabela de processos para o uso do Filho. Se ele acha um, ele copia toda informação da entrada do Pai na tabela para a entrada do Filho. E então aloca memória para os segmentos de dados e pilha do Filho, sendo cópias exatas do Pai. A estrutura de usuário é copiada após a pilha. O segmento de código pode ser tanto copiado quanto compartilhado (neste caso, como somente leitura). A esse ponto o Filho está pronto para executar.
+A princípio uma cópia completa do espaço de endereçamento do processo Pai deveria ser feita, entretanto isso pode ser muito custoso, então todos os sistemas UNIX modernos trapaceiam. Eles dão aos seus Filhos suas próprias tabelas de páginas, mas as tem apontadas como somente leitura. Sempre que um Filho tenta escrever em uma página, recebe uma falha de proteção. O kernel percebe e aloca uma nova cópia daquela página para o Filho, mas agora como leitura/escrita. Desse modo, apenas páginas que são escritas são copiadas. Esse mecanismo foi nomeado como copy-on-write. Tem o benefício adicional de não precisar de duas cópias do programa na memória, economizando RAM.
+
+\section{Escalonamento em UNIX}
+O sistema UNIX foi projetado para suportar um grande número de atividades concorrentes sobre seus recursos, desta forma os algoritmos de escalonamento são otimizados para permitir acesso à todos os recursos e com um baixo tempo. O escalonador é dividido basicamente em dois níveis: alto e baixo. O de nível mais baixo pega o próximo processo a rodar de um conjunto de processos na memória e no estado pronto. O algoritmo de nível mais alto move os processos entre a memória e o disco para que todos os processos tenham uma chance de estar na memória e executar.
+Existem pequenas diferenças entre as diversas versões do UNIX quando está se tratando de algoritmos de escalonamento, como por exemplo o uso de múltiplas filas. Cada fila está associada a um escopo de valores de prioridade que não podem ser sobrepostos. Processos executando em modo usuário têm valores positivos.
+Processos executando em modo kernel têm valores negativos. Valores negativos têm as maiores prioridades e os positivos as menores prioridades. Apenas processos que estão na memória e estão prontos são colocados nas filas, desde que a escolha seja feita desse conjunto.
+Quando o escalonador de baixo nível executa, ele procura nas filas de maior prioridade até encontrar uma fila que está ocupada. O primeiro processo daquela fila é escolhido e iniciado. É permitido a este processo executar por no máximo uma unidade de quantum (tipicamente 100ms), ou até ele bloquear-se. Se um processo executa até terminar seu quantum, é colocado de volta no fim de sua fila, e o algoritmo de escalonamento é acionado novamente. 
+Uma vez por segundo, cada prioridade de processo é recalculada segundo a fórmula: 
+	prioridade = USO_do_CPU + nice + base.
+Baseado na sua nova prioridade, cada processo é relocado a fila apropriada, normalmente dividindo a sua prioridade por uma constante resultando o número da fila. CPU_usage, representa em média o número de marcas de clock por segundo que o processo tem feito durante os poucos segundos que passaram.
+Toda a vez que o clock faz uma marca, o contador de USO_do_CPU no processo corrente é incrementado em um na tabela de processos. Esse contador será ultimamente adicionado à prioridade de processo resultando em um valor alto colocando-o em uma fila de baixa prioridade.
+Entretanto, UNIX não pune um processo eternamente por usar a CPU, assim o valor de CPU_usage decrementa com o tempo. Diferentes versões de UNIX implementam diferentes modos de decremento.
+Todo processo tem um valor nice associado. O valor padrão é 0, mas o escopo permitido normalmente vai de -20 a +20. Um processo pode configurar ovalor de nice de 0 a 20 pela chamada de sistema nice. Apenas administradores do sistema podem pedir por um valor de prioridade maior que o normal (valores de - 20 a -1) através da chamada nice. 
+Quando um processo muda para o modo kernel para fazer uma chamada de sistema, é inteiramente possível que o processo tenha que bloquear-se antes de completar a execução da chamada de sistema e voltar para o modo usuário.
+Por exemplo, ele pode recém ter feito um chamada waitpid e ter de esperar por um de seus filhos para terminar. Ele também pode estar esperando por uma entrada no terminal ou um acesso a disco para terminar. Quando ele bloqueia-se, é removido da estrutura de filas, ficando inabilitado para executar.
+Entretanto, quando acontece o evento pelo qual estava esperando, ele é colocado na fila com um valor negativo. A escolha desse valor é determinada pelo evento que aconteceu. A prioridade relativa de I/O de disco, I/O de terminal, etc..., é interna ao Sistema Operacional e não pode ser alterada sem a recompilação do kernel. Esses valores são representados na fórmula de prioridade pelo valor base e são espaçados entre eles suficientemente para que ações diferentes correspondam a filas diferentes.
+A idéia por trás desse esquema é tirar os processos do kernel o mais rápido possível. Se um processo está tentando ler um arquivo em disco, fazendo-o esperar um segundo entre cada chamada de leitura será muito vagaroso. É de longe melhor deixá-lo executar imediatamente depois de cada requisição atendida, assim ele pode fazer a próxima rapidamente. Similarmente, se um processo bloqueou-se esperando por uma entrada no terminal, é claramente um processo interativo, e tal processo deveria receber uma prioridade alta assim que estivesse pronto garantido que os processos interativos recebem maior atenção. Nesse caminho, processos CPU-bound basicamente recebem a CPU apenas quando todos os processos I/O-bound e interativos estão bloqueados.

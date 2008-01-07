@@ -1,0 +1,121 @@
+\chapter{Sistema de arquivos do Unix}
+
+\section{Introdução}
+
+O sistema de arquivo do Unix pode ser considerado uma das partes mais importante do sistema operacional. A robustez do seu sistema de arquivos e as vantagens oferecida por ele, é um dos motivos do uso deste sistema em aplicações denomidas de “missão-crítica”.
+Existem comumente no Unix dois tipos de arquivos: arquivos regulares e diretórios. Os arquivos regulares são geralmente textos, documentos, arquivos fontes, imagens e executáveis. Já os diretórios, apesar de conter uma cadeia de bytes(como os arquivos regulares),  o sistema operacional trata estes bytes para permitir a visualização dos arquivos que o diretório contém. Existem também outros tipos de arquivos, sendo eles: links simbólicos, links reais, pipes, arquivos que contém dispositivos mapeados(arquivos do diretório /dev).
+Os arquivos são organizados em diretórios, e estes diretórios podem conter sub-diretórios. O diretório raiz é /, sendo “/” usado para a separação dos diretórios. A estrutura do diretório / é a seguinte: /bin contendo os arquivos binários, /dev contendo os dispositivos mapeados em arquivos, /etc arquivos de configuração usado pelo sistema e programas instalados e o diretório /usr que contém os arquivos dos usuários. 
+O acesso aos diretórios pode ser feito através do caminho absoluto, sendo neste caso necessário explicitar o caminho completo do diretório apartir da raiz(/). Também existe o conceito de diretório corrente, permitindo o acesso à arquivos e diretórios através do uso de caminho relativo. Quando um arquivo não contém o seu primeiro caracter “/”, ele usa o caminho relativo para acessar os arquivos\diretórios.
+Devido o sistema operacional Unix ser um sistema multi-usuário, o mesmo arquivo pode ser acessado ao mesmo tempo por diferentes usuários. Para evitar condições de corrida, o padrão POSIX define um sistema de locking para arquivos, podendo o usuário definir o range de bytes que será imposto o locking, desta forma evitando condição de corrida na parte que está sendo modificada e permitindo a modificação do resto do arquivo.
+Existem diversas chamadas de sistema que permitem a manipulação de arquivos, são elas:
+fd = creat()
+fd = open()
+s = close(fd)               
+n = read()
+n = write()
+posicao = lseek()
+s = stat()
+s = fstat() 
+s = pipe(&fd[0])
+s = fcntl()
+
+\section{Estruturas}
+
+O kernel do Unix mantém diversas informações sobre os arquivos, a estrutura no kernel responsável por estas informações é struct stat mostrada abaixo.
+
+struct stat {
+    dev_t     st_dev;     /* ID do dispositivo que contém o arquivo */
+    ino_t     st_ino;     /* número do inode */
+    mode_t    st_mode;    /* modo do arquivo */
+    nlink_t st_nlink;     /* número de links do arquivo */
+    uid_t     st_uid;     /* ID do usuário do arquivo */
+    gid_t     st_gid;     /* ID do grupo do arquivo */
+    dev_t     st_rdev;    /* ID do dispositivo para arquivos especiais */
+    off_t     st_size;    /* Tamanho do arquivo em bytes */
+    time_t    st_atime;   /* Hora do último acesso */
+    time_t    st_mtime;   /* Hora da última modificação */
+    time_t    st_ctime;   /* Hora da última modificação de status */
+    long      st_blksize; /* Bloco de IO usado pelo dispositivo */
+    blkcnt_t st_blocks;   /* Número de 512 bytes de blocos alocados */
+};
+
+
+
+A estrutura do sistema de arquivo Unix é dividia em blocos. O bloco 0 contendo 512 bytes não é usado. O bloco 1 guarda o superbloco, guardando no superbloco informações sobre o sistema de arquivos como um todo, sendo estas informações como o número de blocos do sistema de arquivos, número de inodes(arquivos), e o número de inodes livres. Cada arquivo no sistema de arquivos é representado como um único inode e contém campos como:
+
+i_mode. Este campo especifica se o arquivo é um diretório (IFDIR), um bloco especial (IFBLK), ou um caracter especial (IFCHR). Se nenhum destes valores esta especificado o arquivo é tratado como um arquivo regular.
+
+i_nlink. Este campo guarda o número de links que o arquivo possui, quando este campo for igual a 0 o inode é liberado.
+
+i_uid. ID do usuário do arquivo.
+
+i_gid. ID do grupo do usuário.
+
+i_size. Tamanho do arquivo em bytes.
+
+i_addr. Este campo guarda os blocos que os dados do arquivo estão armazenados.
+
+i_mtime. A hora que o arquivo foi modificado.
+
+i_atime. A hora do último acesso ao arquivo.
+
+Cada arquivo no disco é representado por um inode. Quando um arquivo é aberto, o inode deve ser buscado no disco. 
+É através do inode do arquivo o sistema operacional acessa a tabela de inodes(armazenada no disco) e traz as informações para a memória. As informações são colocadas em uma tabela de inodes contida no kernel do sistema. 
+O inode deve ficar na memória durante o tempo que o arquivo estiver aberto e tipicamente é escrito no disco quando alguma operação precisa alterar a esturuda do inode. Por exemplo, quando um arquivo é truncado e tem seu tamanho alterado, as informações sobre os blocos que não serão mais ocupados deverão ser escritas no disco. Para aumento de desempenho, mesmo que um inode não esteja sendo usado ele é mantido na memória durante o máximo de tempo, somente sendo removido quando não houverem espaços livres para novos inodes que foram buscados no disco.
+Por critério de proteção e desempenho existe uma tabela de descritores de arquivos abertos. Esta tabela armazena o inode do arquivo e o informações sobre o modo de abertura e localização dentro do arquivo. Desta forma, diferentes processos podem acessar o mesmo arquivo com diferentes modos(como somente leitura, escrita, leitura binária) e também a posição corrente pertencente aquele processo dentro do arquivo. O Unix é um sistema multi-usuário, então os dados sobre abertura e posição interna do arquivo não poderiam serem armazenados na mesma estrutura que armazena o inode.
+O inode permite acessar diretamente os primeiros 10 blocos que armazenam os dados do arquivo diretamente. Para arquivos que precisem mais 10 blocos, são então usados blocos com 1, 2 ou 3 níveis de indireção, permitindo então que arquivos ocupem até 10 + 216 blocos.
+
+
+
+
+\section{Sistema de arquivo Ext2 e Ext3}
+
+A primeira versão de arquivos Ext2 permitiu arquivos de tamanho máximo igual 2GB. Isto foi um grande avanço, pois até então os sistemas de arquivos tinham pouco suporte para tamanho de arquivos grandes. Outra modificação foi no tamanho do nome do arquivo. Inicialmente os nomes dos arquivos estavam limitados a 16 caractéres, no Ext2 arquivos possuem nome com até 255 caractéres. 
+Quando um sistema de arquivos Ext2 é criado, o administrador do sistema pode escolher o melhor tamanho de bloco que será usado (entre 1.024 a 4.096 bytes), dependendo da expectativa do tamanho médio dos arquivos. O administrador também tem a possibilidade de definir o número maximo de inodes de uma partição Ext2.
+Uma característica interessante deste sistema de arquivos é o fato de no momento que é criado um arquivo regular, o sistema de arquivos aloca blocos adicionais. Esta caracterísitca foi adotada, pois desta maneira, no momento do aumento de tamanho do arquivo não haverá fragmentação, tendo em visto que existem blocos livres pertencentes à este arquivo. Tanto a fragmentação quanto a otimização no tempo de acesso aos arquivos é uma das principais preocupações no Ext2.
+Em sistemas de arquivos anteriores havia um problema sério com inconsistencia de informações, relacionando o número de links de um arquivo com o real número de links. Devido a problemas de parada no sistema no momento da criação de links, era possível que a informação verdadeira sobre os links criados não fossem armazenado na esturutura do arquivo. Este problema foi resolvido através da modificação da estrutura antes da efetiva criação do link, desta forma, mesmo que ocorrece alguma falha no hardware, mesmo que o número de links no inode estivesse incorreta seria mantido a consistência com o diretório. Os testes de consistência são feitos através do aplicativo e2fsck durante o boot, em busca de possíveis erros.
+A estrutura de disco pertencente ao sistema de arquivo Ext2 é definida da seguinte forma: exceto pelo bloco de boot, todos os outros blocos possuem grupos de tamanho fixo. Cada grupo de blocos gerencia um conjunto fixo de inodes e blocos de dados e contem uma cópia do superbloco. O primeiro grupo de blocos inicia com o deslocamento de 1024 bytes do inicio da partição do disco.
+O primeiro bloco(após o boot), o bloco 0 é dividido da seguinte forma: possui o superbloco armazenado em único bloco, os descritores de grupo armazenado em quantos blocos forem necessário para armazenar detalhes de todos os grupos, 1 bloco para armazenamento do mapa de bits, blocos para armazenar os a tabela de inodes e blocos para armazenar os blocos de dados.  O restante dos dados do sistema Ext2 é para armazenamento dos grupos de blocos de dados.
+A estrutura de grupos de blocos reduz consideravelmente a fragmentação de arquivos, pois o kernel tenta manter se possível os dados pertencente ao grupo de arquivos dentro do própio grupo. 
+Os dados que são mantindos são os seguintes: uma cópia do superbloco do sistema de arquivos, uma cópia dos descritores dos grupos, os dados do bloco de mapa de bits e uma tabela de inodes. A estrutura do superbloco possui os seguintes campos:
+
+struct ext2_superblock {
+   unsigned long  s_blocks_count;      /* Contador de blocos(em uso) */
+   unsigned long  s_r_blocks_count;    /* Contador de blocos reservados */
+   unsigned long  s_free_blocks_count; /* Contador de blocos livres */
+   unsigned long  s_free_inodes_count; /* Contador de inodes livres */
+   unsigned long  s_first_data_block;  /* Primeiro bloco de dados */
+   unsigned long  s_log_block_size;    /* Tamanho do bloco */
+   long           s_log_frag_size;     /* tamanho do fragmento */
+   unsigned long  s_blocks_per_group;  /* # Blocos por grupo */
+   unsigned long  s_frags_per_group;   /* # Fragmentos por grupo */
+   unsigned long  s_inodes_per_group;  /* # Inodes por grupo */
+   unsigned long  s_mtime;             /* Hora da montagem */
+   unsigned long  s_wtime;             /* Hora de escrita */
+   unsigned short s_mnt_count;         /* Contador de montagens */
+   short          s_max_mnt_count;     /* Contador máximo de montagem */
+   unsigned short s_magic;             /* Assinatura mágica */
+   unsigned short s_state;             /* Estado do sistema de arquivo */
+   unsigned short s_errors;            /* Erros de tratamento */
+   unsigned long  s_lastcheck;         /* Hora da última checagem */
+   unsigned long  s_checkinterval;     /* Tempo máximo entre chacagem */
+};
+
+A maioria destes campos são auto-explicatórios e descrevem o uso dos inodes e dos blocos de dados dentro do grupo de blocos. O número mágico em  Ext2 é 0xEF58. Os campos finais da estrutura são usados para determinar quando será necessário realizar uma checagem completa no sistema.
+Quando um arquivo sequencial está sendo escrito, o sistema pré-aloca oito unidades de blocos contínuos. Caso no momemento do fechamento do arquivo os blocos exista blocos adicionais, eles serão liberados para o sistema. Como dito anteriormente, foi adotado este método para diminuir a fragmentação de dados no disco, e pequenos arquivos podem ser acessados com pouco movimento da cabeça do disco. A fragmentação de disco é considerávelmente diminuida através deste método, mas como o uso diário e modificações em arquivos e outras operações tornam o sistema Ext2 fragmentado. 
+
+
+A estrutura que armazena informações sobre o grupo de blocos é a seguinte:
+
+struct ext2_group_desc {
+    unsigned long bg_block_bitmap;       /* Mapa de bits do bloco */
+    unsigned long bg_inode_bitmap;       /* Mapa de bits do inode do bloco */
+    unsigned long bg_inode_table;        /* Tabela de inodes do bloco */
+    unsigned short bg_free_blocks_count; /* Contador de blocos livres */
+    unsigned short bg_free_inodes_count; /* Contador de inodes livres */
+    unsigned short bg_used_dirs_count;   /* Contador de diretórios */
+};
+
+Esta estrutura basicamente aponta para outros componentes do grupo de blocos, com os primeiros três campos referenciando mebros de blocos específicos dos blocos no disco. Através da alocação de inodes e informações sobre o blocos do disco dentro do própio grupo de blocos, é possível aumentar a performance através da redução dos movimentos da cabeça de disco, que anteriormente precisaria obter as informações no começo do disco.
+O sistema de arquivos Ext3 foi desenvolvido para solucionar um problema expecífico. Este problema consitia em realizar uma checagem geral do sistema após algum erro no sistema. O tempo para realizar o teste de integridade era incrivelmente grande, o que causava tempo de processamento perdido. Foi introduzido então o conceito de  journaling. Através deste conceito, antes de efetuar qualquer modificação é gravado em disco um log do sistema, referenciando os blocos que serão modificados. Após a conclusão da operação, o log é atualizado removendo as entradas que foram inseridas. Desta forma, caso aconteça alguma falha no sistema durante alguma operação com os arquivos, o arquivo de log conterá entradas não removidas. Desta forma, o sistema não precisa efetuar uma varredura completa de falhas, e sim apenas corrigir as entradas do arquivo de log  pertencete ao journaling.
+O aumento de desempenho aumentou muito após a inclusão desta vatangem sobre o Ext2. A camada pertencete ao journaling foi colocada em uma camada externa do sistema Ext3, desta forma, foi possível fazer a migração de sistemas Ext2 para Ext3 fácilmente.
