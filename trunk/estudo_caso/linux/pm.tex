@@ -58,9 +58,7 @@ Através destas chamas é possível criar processos, “matar” processos, modi
 \section{Threads}
 Em UNIX também são permitido a criação de processos leves, ou threads. As threads são disponibilizadas através de um padrão chamado POSIX Threads(ou pthreads). Este padrão permite que diferentes fluxos de execução possam ser executados de forma concorrente. A diferença básica entre processos e threads é que ao contrário da programação concorrente através de processos, quando utilizado com fork mantendo vários processos na memória, uma thread ocupa os dados globais de um processo, modificando apenas o conjunto de instruções que irá executar, assim como dados dos registradores que contolam a execução. Desta forma, um mesmo processo pode conter diferentes fluxos concorrente e todas as threads tem acesso a área de memória global do processo, podendo fazer a comunicação através de operações write/read na área compartilhada. Com o compartilhamento de memória, é necessário o controle ao acesso, logo, o padrão POSIX inclui primitivas para exclusão mútua e acesso condicional. Desta forma o programador pode controlar o acesso à memória global, evitando assim, erros que são comuns com este problema. Abaixo segue primitivas para manipulação de threads e controle de áreas compartilhadas na memória:
 
-
-
-	pthread_create()
+	pthread_create\(\)
 	pthread_exit
 	pthread_join
 	pthread_mutex_init
@@ -72,7 +70,6 @@ Em UNIX também são permitido a criação de processos leves, ou threads. As th
 	pthread_cond_wait
 	pthread_cond_signal
 
-
 \section{Implementação de Processos em UNIX}
 Cada processo possui uma parte do usuário que roda o programa do usuário. Entretanto, quando uma de suas threads faz uma chamada de sistema, ela troca para o modo kernel e começa a execução no contexto do kernel, com um mapa de memória diferente e acesso completo a todos os recursos da máquina.
 Continua sendo a mesma thread, mas agora mais poderosa. O kernel mantém duas estruturas de dados chaves relacionadas a processos: a tabela de processos e a estrutura de usuário. A tabela de processos é residente todo o tempo e contém as informações necessárias a todos os processos, até mesmo aqueles que não estão presentes na memória. A estrutura de usuário é paginada quando seu processo associado não está na memória.
@@ -80,7 +77,6 @@ A informação na tabela de processos podem ser classificadas nas seguintes cate
 1.Parâmetros de escalonamento. Prioridade de processo, quantidade de tempo de CPU consumida recentemente, quantidade de tempo dormindo recentemente. Juntos, estes atributos são usados para determinar qual processo será o próximo a ocupar a CPU.
 2.	Imagem da memória. Ponteiros para o código, dados e segmentos de pilha, ou se 	paginação está sendo usada, ponteiros para as tabelas de páginas. Se o segmento de 	código é compartilhado, o ponteiro de segmento aponta para a tabela de segmento 	compartilhada. Quando o processo não está na memória, informações de como achar suas 	partes no disco estão aqui também.
 3.	Signals. Máscaras mostram quais signals estão sendo ignorados, quais estão sendo 	capturados, quais estão temporariamente bloqueados e quais são os que estão para serem 	liberados. 
-
 4.	Miscellânea. Estado corrente do processo, evento pelo qual está esperando, PID, PID do 	processo pai, e identificação de usuário e grupo.
 
 A estrutura de usuário contém informação que não é necessária quando o processo não está fisicamente na memória. A informação contida na estrutura de usuário inclui os seguintes items:
@@ -99,7 +95,7 @@ Existem pequenas diferenças entre as diversas versões do UNIX quando está se 
 Processos executando em modo kernel têm valores negativos. Valores negativos têm as maiores prioridades e os positivos as menores prioridades. Apenas processos que estão na memória e estão prontos são colocados nas filas, desde que a escolha seja feita desse conjunto.
 Quando o escalonador de baixo nível executa, ele procura nas filas de maior prioridade até encontrar uma fila que está ocupada. O primeiro processo daquela fila é escolhido e iniciado. É permitido a este processo executar por no máximo uma unidade de quantum (tipicamente 100ms), ou até ele bloquear-se. Se um processo executa até terminar seu quantum, é colocado de volta no fim de sua fila, e o algoritmo de escalonamento é acionado novamente. 
 Uma vez por segundo, cada prioridade de processo é recalculada segundo a fórmula: 
-	prioridade = USO_do_CPU + nice + base.
+	$ prioridade = USO_do_CPU + nice + base. $
 Baseado na sua nova prioridade, cada processo é relocado a fila apropriada, normalmente dividindo a sua prioridade por uma constante resultando o número da fila. CPU_usage, representa em média o número de marcas de clock por segundo que o processo tem feito durante os poucos segundos que passaram.
 Toda a vez que o clock faz uma marca, o contador de USO_do_CPU no processo corrente é incrementado em um na tabela de processos. Esse contador será ultimamente adicionado à prioridade de processo resultando em um valor alto colocando-o em uma fila de baixa prioridade.
 Entretanto, UNIX não pune um processo eternamente por usar a CPU, assim o valor de CPU_usage decrementa com o tempo. Diferentes versões de UNIX implementam diferentes modos de decremento.
