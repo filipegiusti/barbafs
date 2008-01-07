@@ -1,18 +1,28 @@
 \chapter{Gerenciamento de Memória}
+
 \section{Memória Virtual}
+
 O modelo de memória UNIX foi feito para que fosse possível implementá-lo nas mais diversas máquinas com diferentes sistemas de gerenciamento de memória, desde máquinas com nenhum gerenciamento, como os antigos IBM PCs, até as máquinas atuais, onde o suporte a paginação e segmentação é implementado em hardware. Todo processo UNIX tem seu espaço de endereçamento, constituído de três partes: a parte de código, a parte de dados e a parte de pilha, como mostra a figura.
 
 \section{Segmentos do processo na memória}
 
 A parte de código contém as instruções de máquina. Esta parte de texto é normalmente feita somente para a leitura.
+
 A parte de dados contém o armazenamento das variáveis do programa, como strings, arrays, e outros dados. É dividido em duas subpartes, os dados inicializados e os dados não inicializados, que por razões históricas recebe o nome de BSS. A subparte inicializada contém variáveis e constantes que necessitam de um valor inicial quando o programa for inicializado.
+
 Diferentemente da parte de código, a parte de dados pode ser alterada. Programas alteram suas variáveis toda hora. E mais, eles precisam alocar memória dinamicamente, em tempo de execução. O UNIX trata isso permitindo que o segmento de dados aumente ou diminua. Uma chamada do sistema, brk, está disponível para que o programa ajuste o tamanho da sua parte de dados. A função ANSI C malloc, geralmente usada para alocar memória, faz uso intenso desta chamada do sistema.
+
 A terceira parte é a que possui a pilha do programa. Ela inicia do topo do espaço de endereçamento virtual e cresce para baixo. Se a pilha cresce além do limite, uma falha de hardware ocorre, o que faz com que o sistema operacional aumenta a parte de pilha em alguns milhares de bytes, sabendo que os programas não gerenciem o tamanho da pilha de maneira explícita. Quando um programa inicia sua pilha, ela não está totalmente vazia. Ao invés disso, ela contém toda as variáveis de shell, como o comando digitado para que o programa seja invocado.
+
 Quando dois usuários estão usando o mesmo programa, seria possível, mas ineficiente, manter duas cópias da parte de código do programa na memória. Ao invés disso, a maioria dos sistemas UNIX suporta partes de código compartilhadas. Como pode ser visto na figura XX.
+
 Muitas versões de UNIX também suportam arquivos mapeados em memória. Esta funcionalidade torna possível mapear uma porção de um arquivo no espaço de endereçamento de um processo.
 
 \section{Chamadas de sistemas para a memória UNIX}
+
 A especificação POSIX, não determina nenhum tipo de chamada de sistema para a memória, pois foi considerada uma padronização dependente de máquina. Na prática, os sistemas UNIX, possuem algumas chamadas de sistema para poder gerenciar a memória, sendo as mais comuns as especificadas na tabela abaixo.
+
+TODO
 Chamada de sistema
 Descrição
 s = brk(end)
@@ -21,48 +31,86 @@ a = mmap(end, comp, prot, flags, fd, offset)
 Mapeia um arquivo na memória
 s = unmap(end, len)
 Retira um arquivo da memória
-Chamadas de sistema para memória UNIX
+
 A chamada de sistema brk especifica o tamanho da parte de dados, dado pelo primeiro byte após end. Se o valor é maior que o antigo, o segmento de dados se torna maior, caso contrário, ele diminui.
+
 As chamadas de sistema, mmap e unmap, controlam arquivos mapeados, o primeiro argumento para mmap end, determina o endereço no qual o arquivo (ou alguma parte dele) será mapeado, sendo este valor um múltiplo do tamanho de uma página, caso o valor passado como argumento seja 0, o sistema retorna um endereço válido pelo ponteiro a. O segundo argumento, comp, indica quantos bytes deverão ser mapeados, que também deve ser um múltiplo do tamanho de página. O terceiro argumento, prot, determina a proteção do arquivo mapeado. A proteção do arquivo pode ser marcada como para leitura, escrita, executável, ou combinação deles. O quarto parâmetro, flags, controla se o arquivo é protegido ou compartilhado, e se o parâmetro end, é um argumento válido ou se apenas é uma sugestão. O quinto parâmetro, fd, é um descritor de arquivo para o arquivo que será mapeado, como somente arquivos abertos podem ser mapeados, antes de mapear um arquivo este deve ser primeiro aberto. Finalmente, offset, indica em que ponto do arquivo deve começar o mapeamento.
+
 A chamada de sistema, unmap, retira um arquivo mapeado da memória, se uma parte do arquivo foi retirado da memória, o restante ainda permanece na memória.
+
 \section{Swapping}
+
 A partir do 3BSD, muitos sistemas UNIX são baseados no swapping.
+
 O movimento entre a memória e disco é feita em alto nível por um escalonador de dois níveis chamado swapper. O swapping da memória para o disco é inicializado quando o kernel está sem memória livre ou conta com um dos seguintes eventos:
-Uma chamada de sistema fork necessita de memória para os processos filhos;
-Uma chamada de sistema brk necessita expandir o segmento de dados de determinado processo;
-Uma pilha se torna maior que o espaço alocado para ela;
+
+\begin{itemize}
+\item Uma chamada de sistema fork necessita de memória para os processos filhos;
+\item Uma chamada de sistema brk necessita expandir o segmento de dados de determinado processo;
+\item Uma pilha se torna maior que o espaço alocado para ela;
+\end{itemize}
+
 Para escolher um processo vítima, primeiro o swapper observa os processos que estão bloqueados esperando por algo. Melhor remover um processo que não pode rodar do que remover da memória algum processo que é CPU-bound. Se mais que um processo for encontrado, aquele que tiver a prioridade e o tempo de residência mais alto será o escolhido.
+
 Depois de alguns segundos o swapper examina a lista de processos que atualmente foram retirados da memória para verifcar se algum deles está pronto para rodar. Se algum deles está nesta condição, aquele que está a mais tempo no disco será escolhido. O algoritmo de troca é então repetido até que uma das duas condições seja atendida:
-Não há processos no disco que estejam prontos para rodar;
-A memória está tão cheia de processos que foram trazidos da memória que não há mais espaço para que possam ser retirados.
+
+\begin{itemize}
+\item Não há processos no disco que estejam prontos para rodar;
+\item A memória está tão cheia de processos que foram trazidos da memória que não há mais espaço para que possam ser retirados.
+\end{itemize}
+
 Para prevenir thrashing, nenhum processo pode ser retirado até que o seu tempo de permanência na memória seja superior a 2 segundos.
+
 Os espaços livres da memória e o dispositivo de swap mantém o controle da memória através de uma lista encadeada de blocos livres. Quando for necessário armazenar algum dado, o bloco livre apropriado será escolhido através do algoritmo first fit, que retorna o primeiro bloco livre que for suficientemente grande para que o dado seja armazenado. O bloco livre é então reduzido de tamanho deixando que a parte residual seja anexada a lista de blocos livres.
+
 \section{Paginação}
+
 A paginação é implementada parte pelo kernel, e parte por um processo chamado de page daemon. O page daemon é o processo 2 (o processo 0 é o swapper e o processo1 é o processo init). Como todos os processos daemons, o page daemon é iniciado periodicamente, para que possa observar se há algum trabalho para ser feito. Se o processo percebe que o número de páginas da lista de memória livre é muito pequeno, ele inicia a ação de liberar páginas.
+
 A memória principal do 4BSD está organizada como mostrado na figura abaixo, ele considera 3 partes. As primeiras duas partes o kernel e o core map, estão colocadas na memória. O resto da memória está dividido em páginas, cada uma das quais contendo uma parte de texto, dados ou uma pilha, também podendo ser uma tabela de páginas, ou uma lista de páginas livres.
 
 Número do Ponteiro Pfdata == bloco == Dispositivo == Lógico == Nº de Referência == Estado da Página == Número da Página/armazenamento
+
 O core map contém informação sobre os conteúdos das páginas. A entrada do core map 0, descreve a página 0, o core map 1 descreve e entrada 1 e assim por diante. Os dois primeiros itens de uma entrada no core map são usadas quando o page frame está na lista de páginas livres, eles servem para fazer uma lista duplamente encadeada. As próximas três entradas servem para indicar onde no disco a página está armazenada. As outras três indicam a entrada na tabela de processos do processo da página, o tipo da página e o deslocamento dentro do espaço de endereçamento do processo. No final existem algumas flags usadas pelo algoritmo de paginação.
+
 Quando um processo é iniciado, ele causa uma falta de página, porque uma ou mais páginas não estão presentes na memória. Se uma falta de página ocorre, o sistema operacional pega a primeira página que está livre, e lê o conteúdo do disco para esta página. Se a lista de páginas livres estiver vazia, o processo é suspenso até que o page daemon libere uma página.
+
 \subsection{O algoritmo de troca de páginas}
+
 O algoritmo de colocação de páginas é executado pelo page daemon. A cada 250 ms ele é acordado para verificar se o número de páginas é menor ou igual ao parâmetro do sistema chamado lotsfree (tipicamente ¼ da memória). Se há páginas insuficientes, o page daemon inicia a transferência da memória para o disco até que o número lotsfree de páginas esteja disponível. Se o número de páginas é maior que o valor fornecido por lotsfree, o processo page daemon percebe que não há mais nada a fazer e volta a dormir. Se a máquina tem memória plena, e poucos processos na memória, o page daemon dormirá o tempo todo.
+
 O algoritmo que o page daemon utiliza é uma variação do algoritmo do relógio. E é um algoritmo global, ou seja, quando uma página é removida, não é levado em consideração a que processo a página pertencia.
+
 O algoritmo do relógio básico trabalha analisando as páginas circularmente. No primeiro passo, quando passa por uma página, o bit de uso é zerado. No segundo passo, se as páginas que não foi acessada desde o primeiro passo, terão o seu bit de uso zerado e serão inseridas na lista de páginas livres (após salvar no disco, se ele foi alterada). Uma página que está na lista de páginas livre retém seu conteúdo, o qual pode ser recuperado caso aquela página seja necessária antes de ser sobrescrita.
+
 Originalmente, o sistema Berkeley UNIX usava o algoritmo do relógio básico, mas foi descoberto que em memórias muito grandes, os passos do algoritmo tornam-se muito longos. Então foi desenvolvida uma versão modificada, que é o algoritmo do relógio de dois ponteiros. Com este algoritmo, o page daemon mantém dois ponteiros dentro do core map. Quando ele é ativado, o primeiro ponteiro limpa o bit de uso, e o segundo ponteiro verifica o bit de uso, depois ele avança ambos os ponteiros. Se os dois ponteiros são mantidos juntos, então só páginas muito acessadas tem chance de serem acessadas entre o tempo do primeiro e do segundo ponteiros passarem. Se a distância entre os dois ponteiros diferencia 359 graus, retorna-se ao algoritmo do relógio original. Cada vez que o page daemon roda, os ponteiros rodam menos que uma revolução completa, dependendo da quantidade de páginas livres em relação ao lotsfree.
+
 \section{SWAP}
+
 A paginação do System V é fundamentalmente similar ao 4BSD, o qual não entrou nada de novo até que a versão do sistema de Berkeley se tornou estável, e está rodando há anos antes que os sistema de paginação fosse incorporado ao System V. Entretanto há duas diferenças interessantes.
+
 Primeiro, o System V usa o algoritmo do relógio original. Entretanto, ao invés de inserir a página numa lista de páginas livres no segundo passo, a página só será inserida lá após um número n consecutivo de passos.
+
 Segundo, ao invés de uma simples variável lotsfree, o System V tem duas variáveis, min e max. Quando o número de páginas fica abaixo de min, o page daemon é iniciado para liberar páginas, e ele continua até que o número de páginas liberadas seja superior ao valor mostrado por max. Esta forma diminui a instabilidade que potencialmente ocorria no 4BSD. Considerando uma situação no qual o número de páginas livres é apenas uma página menor que lotsfree, o page daemon é ativado e libera uma página. Então ocorre outra falta de página ocorre, trazendo de volta outra página para a memória e diminuindo o valor de lotsfree, fazendo com que o page daemon seja ativado novamente. Fazendo com que Max seja substancialmente maior que min, o page daemon é ativado com menos freqüência.
+
 \section{Gerenciamento de memória LINUX}
+
 Cada processo Linux numa máquina de 32 bits possui um espaço de endereçamento virtual de 3GB, com o restante (1GB) reservado para sua tabela de páginas e outros dados do kernel. Este 1GB restante é inacessível em modo usuário, mas se torna acessível quando um trap é executado.
+
 O espaço de endereçamento virtual é dividido em áreas homogêneas, contíguas e alinhadas as páginas. Cada área consiste de páginas consecutivas com mesma proteção e propriedades. O tamanha de página é fixo, e para arquitetura i386 é de 4KB.
-Cada área é descrita no kernel por uma estrutura vm_area_struct. Todas as estruturas de área de um processo estão numa lista encadeada ordenada por endereço. Essa estrutura indica a proteção da área, se está fixa na memória e em que direção ela cresce. Ela também indica se a área é privada ou compartilhada.
+
+Cada área é descrita no kernel por uma estrutura vm\_area\_struct. Todas as estruturas de área de um processo estão numa lista encadeada ordenada por endereço. Essa estrutura indica a proteção da área, se está fixa na memória e em que direção ela cresce. Ela também indica se a área é privada ou compartilhada.
+
 Depois de um fork, o Linux faz uma cópia da lista de áreas para o processo filho, mas ajusta os dois para apontarem para a mesma tabela de páginas. As áreas são marcadas para leitura e escrita, mas as páginas são marcadas apenas como leitura. Se qualquer dos processos tentar escrever na página, um trap de proteção irá disparar e o kernel verá que para a área é permitida a escrita e para a página não, então ele faz uma cópia da página e marca como leitura e escrita, e atualiza a tabela de páginas do processo.
-A vm_area_struct também mantém onde a área está salva no disco. Se for uma parte de código ou um arquivo mapeado em memória, é o próprio arquivo. Outras áreas só serão salvas no disco quando tiver que ocorrer um swap out.
+
+A vm\_area\_struct também mantém onde a área está salva no disco. Se for uma parte de código ou um arquivo mapeado em memória, é o próprio arquivo. Outras áreas só serão salvas no disco quando tiver que ocorrer um swap out.
+
 Os sistemas Linux compartilham muitas características do gerenciamento de memória de outros sistemas UNIX, mas com suas características próprias. Os sistemas Linux fazem uso de uma estrutura de páginação de três níveis.
+
 Para utilizar esta estrutura de páginas em três níveis, um endereço virtual é visto como sendo composto de quatro campos. O campo mais significante é utilizado como índice dentro do diretório de páginas, o próximo campo refere-se ao diretório de páginas do meio, o campo seguinte, a tabela de páginas, e por fim o último campo refere-se ao deslocamento dentro da página selecionada na memória, a figura mostra melhor a relação entre endereço real de virtual.
 
 A alocação de páginas foi feita para aumentar a eficiência de leitura de escrita das páginas na memória, sendo que o sistema Linux define que as páginas de um processo sejam alocadas de maneira contígua. Para este propósito o buddy system é utilizado. As páginas são alocadas e desalocadas na memória principal, e os blocos disponíveis são alocados de intercalados de acordos com o algoritmo do buddy system, a figura abaixo demonstra de maneira simples como o algoritmo funciona.
 
 A primeira requisição nesse exemplo foi de 8 bytes, então o algoritmo vai dividindo a área de memória até ter o tamanho mais próximo. Entãohouve outra requisição de 8 bytes e mais uma de 4 bytes. Então as duas páginas de 8 bytes foram liberadas, e o algoritmo as junto em uma área de 16 bytes.
+
 O algoritmo de alocação de páginas do Linux é baseado no algoritmo do relógio, utilizado nas primeiras versões do UNIX e no system V. O sistema Linux utiliza um bit de modificação associado a cada página, mais um contador de 8 bits relacionado a idade. A cada página acessada seu contador de idade é incrementado. A cada varredura do sistema pelo pool de páginas globais, ele decrementa o contador para cada página que está na memória principal. A página com o maior valor para idade é a pior candidata para a troca, e uma página com valor zero indica que nunca foi referenciada e é uma candidata a ser substituída. Desta forma o algoritmo utilizado se assemelha a um algoritmo LFU (Least Frequently Used).

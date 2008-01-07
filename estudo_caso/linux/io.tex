@@ -2,6 +2,8 @@
 
 Apesar das muitas maneiras possíveis de se realizar E/S, o UNIX resolveu integrar os dispositivos no sistema de arquivos, sendo chamados de arquivos especiais. Cada dispositivo é associado a um caminho, geralmente no diretório /dev. Como exemplos temos /dev/hda como o primeiro disco rígido, /dev/lp como impressora, /dev/tty como um terminal, e /dev/sda como o primeiro dispositivo sata.
 
+\section{Conceitos Fundamentais}
+
 Os arquivos especiais são acessados da mesma maneira que os demais arquivos. As chamadas do sistema read e write são suficientes para acessa-los. Programas podem abrir, ler e escrever em arquivos especiais da mesma forma que em arquivos comuns. O comando cp, por exemplo, não tem conhecimento que o destino para qual ele está copiando o conteúdo é uma “impressora”.
 
 Arquivos especiais são divididos em duas categorias, bloco e caracter. Um arquivo de bloco consiste de seqüências de blocos enumerados, cuja principal característica é que cada bloco pode ser acessado e endereçado individualmente. Como exemplo, podemos ler diretamente o bloco 124 sem passar pelos blocos 0 a 123. Geralmente os arquivos especiais de blocos são associados aos discos.
@@ -18,10 +20,11 @@ A maioria dos arquivos especiais de caracteres não pode ser acessada aleatoriam
 
 A transmissão de dados em rede é baseada em sockets, introduzida no Unix de Berkeley (BSD). Os sockets são criados e destruídos dinamicamente. Sua criação retorna um registro descritor de arquivo, para estabelecer a conexão, leitura e escrita de dados e liberação da conexão. Quando o socket é criado especifica-se que tipo de transmissão ele suporta. Os tipos mais comuns são listados a seguir:
 
-=== LIST
-Fluxo confiável de bytes orientado à conexão;
-Fluxo confiável de pacotes orientado à conexão;
-Transmissão não confiável de pacotes.
+\begin{itemize}
+\item Fluxo confiável de bytes orientado à conexão;
+\item Fluxo confiável de pacotes orientado à conexão;
+\item Transmissão não confiável de pacotes.
+\end{itemize}
 
 No fluxo confiável de bytes orientado à conexão, dois processos, em diferentes máquinas estabelecem entre si o equivalente a um pipe. Os bytes são escritos em uma extremidade e recebidos na outra, na mesma ordem. Ele é confiável, pois existe garantia que os bytes que partem do processo emissor cheguem no receptor e na mesma ordem de envio.
 
@@ -39,22 +42,22 @@ Após o estabelecimento da conexão, o funcionamento é parecido com um pipe. Um
 
 Como já vimos, cada dispositivo de E/S no sistema Unix está associado a um arquivo especial. A maioria das E/S pode ser feita acessando o arquivo correto, dispensando o uso de chamadas do sistema. Porém algumas vezes pode ser necessário que o dispositivo faça algo em particular.
 
-\section{ioctl}
+\subsection{ioctl}
 
 A ioctl é uma chamada do sistema anterior ao padrão POSIX que executa inúmeras ações específicas dos dispositivos, nos seus arquivos especiais. Com o tempo, ela tornou-se confusa e o POSIX distribuiu suas funções em chamadas distintas.
 
-=== TABLE
-s = cfsetospeed(&termios, speed)
+=== TODO
+s = cfsetospeed(\&termios, speed)
 Ajusta a taxa de transferência de saída.
-s = cfsetispeed(&termios, speed)
+s = cfsetispeed(\&termios, speed)
 Ajusta a taxa de transferência de entrada.
-speed = cfgetospeed(&termios)
+speed = cfgetospeed(\&termios)
 Obtém a taxa de transferência de saída.
-speed = cfgetispeed(&termios)
+speed = cfgetispeed(\&termios)
 Obtém a taxa de transferência de entrada.
-s = tcsetattr(fd, opt, &termios)
+s = tcsetattr(fd, opt, \&termios)
 Ajusta os atributos.
-s = tcgetattr(fd, &termios)
+s = tcgetattr(fd, \&termios)
 Obtém os atributos.
 
 A estrutura termios representa a configuração de um dispositivo, speed é uma enumeração com as possíveis taxas de transferência, fd é um descritor de arquivo aberto, e s é um inteiro que indica se ocorreu algum erro.
@@ -102,7 +105,7 @@ A solução system V, planejada por Dennis Ritchie, os fluxos ou streams são de
 
 Os fluxos possuem um cabeçalho no topo e uma conexão com um driver em sua base. Quando um processo do usuário escreve em um fluxo, o código presente no cabeçalho interpreta a chamada do sistema e empacota os dados em buffers do fluxo, que vão passando de módulo a módulo, em filas de leitura e escrita distintas. Os módulos executam algum tipo de transformação pré-definida e podem ser também módulos de multiplexação, onde capturam um fluxo e os dividem em vários fluxos ou vice-versa.
 
-###############################################################################
+$
 \section{Pipes e Filtros}
 Pipes são caminhos de comunicação, que consistem de uma fila FIFO de bytes, entre dois processos. A saída de um processo torna-se a entrada de outro. Um usuário cria pipelines conectando processos por pipes à moda linear.
 
@@ -114,4 +117,4 @@ Processos assíncronos podem estar lendo e escrevendo no pipe, então o Sistema 
 
 No Unix System III foram utilizados named pipes, no System V, message queues e no sistema BSD, os Sockets.
 
-Os Filtros ou Filters são programas que processam um fluxo único de entrada para produzir um fluxo de saída.
+Os Filtros ou Filters são programas que processam um fluxo único de entrada para produzir um fluxo de saída.$
