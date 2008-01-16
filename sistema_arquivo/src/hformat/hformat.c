@@ -7,28 +7,31 @@
 
 #define BOOT1 0x77
 #define BOOT2 0x33
-#define BOOT_PATH "boot"
-#define DISK_NAME "disco"
+#define BOOT_PATH "boot.bin"
+//#define DISK_NAME "disco"
 #define HPSYS_PATH "hpsys"
 #define SIZE_SEC 512
-#define MIN_DISK_SIZE 256
+#define MIN_DISK_SIZE (256)
+#define MAX_DISK_SIZE ( 1024 * 1024 * 2)
 
-
-//#define DISK_SIZE 4096
+char DISK_NAME[255];
 int DISK_SIZE;
-
 FILE *disk;
 
 int save_boot() {
 	FILE *boot_file;
 	char boot_content[SIZE_SEC*2];
+	struct stat info_boot;
+
 	if ( (boot_file = fopen(BOOT_PATH, "rb")) == NULL ) {
 		debug("Erro na abertura de boot");
 	} else {
 		fseek(disk, 0, SEEK_SET);
-		fread(boot_content, sizeof(char), SIZE_SEC * 2, boot_file);
-		fwrite(boot_content, sizeof(char), SIZE_SEC * 2, disk);
-		debug("Boot salvo");
+		stat(BOOT_PATH, &info_boot);
+		fread(boot_content, sizeof(char), info_boot.st_size, boot_file);
+		fwrite(boot_content, sizeof(char), info_boot.st_size, disk);
+		fclose(boot_file);
+		debug("BOOT salvo");
 	}
 	return 1;
 }
@@ -36,21 +39,20 @@ int save_boot() {
 
 int save_so() {
 	FILE *hpsys;
-	int i;
-	char buffer[SIZE_SEC];
+	char *buffer;
 	char info_hpsys_str[100];
 	struct stat info_hpsys;
 
 	/* abertura do hpsys */
 	hpsys = fopen(HPSYS_PATH, "rb");
 	if (!hpsys) {
-		debug("Erro na leitura binaria de hpsys.bin");
+		debug("Erro na leitura binaria do HPSYS");
 		exit(EXIT_FAILURE);
 	}
 
 	/* pega informacoes do hpsys e mostra no debug */
 	stat(HPSYS_PATH, &info_hpsys);
-	sprintf(info_hpsys_str, "hpsys - tamanho: %d bytes", (int)info_hpsys.st_size);
+	sprintf(info_hpsys_str, "HPSYS - tamanho: %d bytes", (int)info_hpsys.st_size);
 	debug(info_hpsys_str);
 	/* fim parte debug hpsys */
 
@@ -58,11 +60,10 @@ int save_so() {
 	fseek(disk, 2*SIZE_SEC, SEEK_SET);
 
 	/* copiando hpsys para o 3 setor */
-	for (i=0; i < 1; i++) {
-		fread(buffer, sizeof(char), SIZE_SEC, hpsys);
-		fwrite(buffer, sizeof(char), SIZE_SEC, disk);
-	} 
-
+	buffer = (char *) malloc( info_hpsys.st_size );
+	fread(buffer, sizeof(char), info_hpsys.st_size, hpsys);
+	fwrite(buffer, sizeof(char), info_hpsys.st_size, disk);
+	debug("HPSYS salvo no disco");
 	fclose(hpsys);
 	return 1;
 }
@@ -98,12 +99,12 @@ int format_disk() {
 		fwrite(&nulo, sizeof(char), 1, disk);	
 	}
 
+	debug("Disco Formatado");
 	save_boot();
 	save_so();
-	save_bitmap();
-	save_root();
-
-	fclose(disk);
+	//save_bitmap();
+	//save_root();
+	//fclose(disk);
 	return 1;
 }
 
@@ -125,25 +126,27 @@ int main(int argc, char *argv[]) {
 	struct stat info_disk;
 	char desc[100];
 	FILE *fp;
+	
+	debug("Iniciando HFORMAT");
 
 	if (argc != 2)
 		print_error("0x0001", "Numero de parametros incorretos", 1);
 
-	if (!(fp = fopen(argv[1], "r")) )
+	if (!(fp = fopen(argv[1], "r")))
 		print_error("0x0002", "Arquivo de disco nao encontrado", 1);
-
 	fclose(fp);
 
-	if (!stat(argv[1], &info_disk) && info_disk.st_size >= 130 && info_disk.st_size <= 4096)
+	if (!stat(argv[1], &info_disk) && info_disk.st_size / 1024 >= MIN_DISK_SIZE && info_disk.st_size / 1024 <= MAX_DISK_SIZE)
 		goto valid_disk_size;
 	else {
-		sprintf(desc, "Tamanho do disco encontrado (%d bytes) invalido", (int)info_disk.st_size);
+		sprintf(desc, "Tamanho do disco encontrado (%2.2f Kb) invalido. O tamanho deve ser entre %d e %d Kb", (float)info_disk.st_size/1024, MIN_DISK_SIZE, MAX_DISK_SIZE);
 		print_error("0x0003", desc, 1);
 	}
 
 valid_disk_size:
 	DISK_SIZE = info_disk.st_size;
-	debug("Iniciando HFORMAT");
+	strcpy(DISK_NAME, argv[1]);
 	format_disk();
-	return 0;
+	fclose(disk);
+	return 1;
 }
