@@ -15,25 +15,34 @@ struct mapa_paginas {
 	endereco_disco end_disco[255]; /**< Endereço da área de dados do arquivo. */
 };
 
+/**
+ * Indicador do tipo de arquivo.
+ */
 enum tipo_arquivo {
-	bin,
-	txt,
-	exe,
-	hpx,
-	obj,
-	dir
+	bin, /**< Arquivo do tipo binário. */
+	txt, /**< Arquivo do tipo texto. */
+	exe, /**< Arquivo do tipo executável do Host. */
+	hpx, /**< Arquivo do tipo executável da máquina virtual */
+	obj, /**< Arquivo do tipo objeto. */
+	dir /**< Arquivo representa um diretório. */
 };
 
+/**
+ * Estrutura que representa o descritor de um arquivo.
+ */
 struct descritor_arquivos {
-	char nome[12];
-	enum tipo_arquivo tipo;
-	char protecao;
-	endereco_disco mapa_pag;
+	char nome[12]; /**< Indica o nome do arquivo descrito. */
+	enum tipo_arquivo tipo; /**< Indica o tipo de arquivo em questão. */
+	char protecao; /**< Atributo que indica o controle sobre eliminação ou gravação. */
+	endereco_disco mapa_pag; /**< Mapa de páginas do arquivo em questão. */
 };
 
+/**
+ * Mapa de arquivos.
+ */
 struct mapa_arquivos {
-	char quantidade[2];
-	endereco_disco self;
-	endereco_disco pai;
-	endereco_disco arquivos[253];
+	char quantidade[2]; /**< Indica ? */
+	endereco_disco self; /**< Aponta para o endereço atual do arquivo em questão. */
+	endereco_disco pai; /**< Aponta para o endereço do pai do arquivo em questão. */
+	endereco_disco arquivos[253]; /**< A complementar. */
 };
