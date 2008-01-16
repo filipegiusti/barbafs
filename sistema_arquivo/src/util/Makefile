@@ -4,7 +4,7 @@ OBJS = util.o
 SRCS = util.c 
 INCLUDE = -I../../include/
 
-all:
+all: 
 	$(CC) $(CFLAGS) $(INCLUDE) $(SRCS) -o $(OBJS)
 
 debug:
