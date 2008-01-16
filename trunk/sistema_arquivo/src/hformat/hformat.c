@@ -1,18 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <string.h>
 //#include "hformat.h"
 #include "util.h"
 
 #define BOOT1 0x77
 #define BOOT2 0x33
-#define DISK_SIZE 4096
+#define BOOT_PATH "boot"
 #define DISK_NAME "disco"
-#define HPSYS_PATH "hpsys.bin"
+#define HPSYS_PATH "hpsys"
 #define SIZE_SEC 512
+#define MIN_DISK_SIZE 256
+
+
+//#define DISK_SIZE 4096
+int DISK_SIZE;
 
 FILE *disk;
+
 int save_boot() {
+	FILE *boot_file;
+	char boot_content[SIZE_SEC*2];
+	if ( (boot_file = fopen(BOOT_PATH, "rb")) == NULL ) {
+		debug("Erro na abertura de boot");
+	} else {
+		fseek(disk, 0, SEEK_SET);
+		fread(boot_content, sizeof(char), SIZE_SEC * 2, boot_file);
+		fwrite(boot_content, sizeof(char), SIZE_SEC * 2, disk);
+		debug("Boot salvo");
+	}
 	return 1;
 }
 
@@ -87,7 +104,38 @@ int format_disk() {
 	return 1;
 }
 
+
+/*
+ * se should_exit == 1 mostra erro e termina programa (erro fatal)
+ */
+
+void print_error(char *erro, char *descricao, int should_exit) {
+	printf("HFORMAT 0.4-160108 alpha\n");	
+	printf("------------------------\n");
+	printf("ERRO.....: %s\n", erro);
+	printf("DESCRICAO: %s\n\n", descricao);
+	(should_exit) ? exit(EXIT_FAILURE) : printf("\t"); 
+}
+
+
 int main(int argc, char *argv[]) {
+	struct stat info_disk;
+	char desc[100];
+
+	if (argc != 2)
+		print_error("0x0001", "Numero de parametros incorretos", 1);
+
+	if (!fopen(argv[1], "r"))
+		print_error("0x0002", "Arquivo de disco nao encontrado", 1);
+
+	if (!stat(argv[1], &info_disk) && info_disk.st_size >= 130 && info_disk.st_size <= 4096)
+		goto valid_disk_size;
+	else {
+		sprintf(desc, "Tamanho do disco encontrado (%d bytes) invalido", (int)info_disk.st_size);
+		print_error("0x0003", desc, 1);
+	}
+
+valid_disk_size:
 	debug("Iniciando HFORMAT");
 	format_disk();
 	return 0;
