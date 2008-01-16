@@ -15,7 +15,7 @@ int main(int agrc, char *argv[]) {
 	pid_t pid;
 	pid = fork();
 	if (pid == 0) {
-		char *parametros[] = {"teste", "arquivoTAL\0\0\0\0\0\0\0\0" , (char *)0 };
+		char *parametros[] = {"boot.bin", "disco2" , (char *)0 };
 		printf("Sou o filho\n");
 		if (execv("boot.bin", parametros) == -1) {
 			printf("Erro no execv.\n");
