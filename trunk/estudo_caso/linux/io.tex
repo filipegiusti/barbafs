@@ -42,20 +42,17 @@ Como já vimos, cada dispositivo de E/S no sistema Unix está associado a um arq
 
 \begin{table}
 \caption{Chamadas do Sistema UNIX de E/S}
-\label{tab:chamadas_sistema}
-$s = cfsetospeed(\&termios, speed)
-Ajusta a taxa de transferência de saída.
-s = cfsetispeed(\&termios, speed)
-Ajusta a taxa de transferência de entrada.
-speed = cfgetospeed(\&termios)
-Obtém a taxa de transferência de saída.
-speed = cfgetispeed(\&termios)
-Obtém a taxa de transferência de entrada.
-s = tcsetattr(fd, opt, \&termios)
-Ajusta os atributos.
-s = tcgetattr(fd, \&termios)
-Obtém os atributos.$
+\label{tab:chamadas_sistema}									\hline
+s = cfsetospeed(\&termios, speed)	&	Ajusta a taxa de transferência de saída.	\hline
+s = cfsetispeed(\&termios, speed)	&	Ajusta a taxa de transferência de entrada.	\hline
+speed = cfgetospeed(\&termios)		&	Obtém a taxa de transferência de saída. 	\hline
+speed = cfgetispeed(\&termios)		&	Obtém a taxa de transferência de entrada.	\hline
+s = tcsetattr(fd, opt, \&termios)	&	Ajusta os atributos.				\hline
+s = tcgetattr(fd, \&termios)		&	Obtém os atributos.				\hline
 \end{table}
+\subsection{ioctl}
+
+A ioctl é uma chamada do sistema anterior ao padrão POSIX que executa inúmeras ações específicas dos dispositivos, nos seus arquivos especiais. Com o tempo, ela tornou-se confusa e o POSIX distribuiu suas funções em chamadas distintas.
 
 A estrutura \emph{termios} representa a configuração de um dispositivo, \emph{speed} é uma enumeração com as possíveis taxas de transferência, \emph{fd} é um descritor de arquivo aberto, e \emph{s} é um inteiro que indica se ocorreu algum erro.
 
@@ -95,9 +92,7 @@ O objetivo do tratador de arquivos de bloco \ref{fig:tratadores} é minimizar o 
 	\caption{Tratador de arquivos de bloco e caractere}
 	\label{fig:tratadores}
 	\centerline{
-		\scalebox{0,8}{
-			\includegraphics{imgs/unixIOsystem.png}
-		}
+		\includegraphics[width=0,8]{imgs/unixIOsystem.png}
 	}
 \end{figure}
 
