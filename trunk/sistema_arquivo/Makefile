@@ -35,7 +35,7 @@ teste: $(OBJS)
 
 clean:
 	rm -f *.o
-	rm -f *.bin
+	rm -f bin/*
 	rm -f src/fatorial/*.o 
 	rm -f src/hformat/*.o 
 	rm -f src/hpsys/*.o 
