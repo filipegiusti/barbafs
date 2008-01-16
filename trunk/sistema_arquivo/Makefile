@@ -18,7 +18,7 @@ OBJS = $(OBJ_FATORIAL)
 SRC_TESTE = $(BASE_TESTE)_fatorial.c 
 OBJS_TESTE = $(BASE_TESTE).o 
 
-all: $(OBJS) hformat 
+all: $(OBJS) hformat boot hreset 
 	$(CC) $(CFLAGS) $(INCLUDE) $(OBJS) $(SRC_MAIN) -o bin/$(OBJ_MAIN)
 
 
@@ -27,6 +27,12 @@ fatorial: src/fatorial/fatorial.o
 
 hformat:
 	make -C src/hformat
+
+boot:
+	make -C src/boot
+
+hreset:
+	make -C src/hreset
 	
 	
 teste: $(OBJS) 
@@ -37,6 +43,8 @@ clean:
 	rm -f *.o
 	rm -f bin/*
 	rm -f src/fatorial/*.o 
+	rm -f src/hreset/*.o 
+	rm -f src/boot/*.o 
 	rm -f src/hformat/*.o 
 	rm -f src/hpsys/*.o 
 	rm -f teste
