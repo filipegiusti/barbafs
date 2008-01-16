@@ -1,7 +1,7 @@
 /**
  * @file hformat.c
- * @brief Execut·vel respons·vel pela formataÁ„o do disco a ser utilizado e carga doS.O. no mesmo.
- * @author Elvio Viscosa, Filipe Giusti, JerÙnimo Madruga, Mauro Kade.
+ * @brief Execut√°vel respons√°vel pela formata√ß√£o do disco a ser utilizado e carga doS.O. no mesmo.
+ * @author Elvio Viscosa, Filipe Giusti, Jer√¥nimo Madruga, Mauro Kade.
  *  @version 1.0
  *  @date    16/01/2007
  */
@@ -13,30 +13,30 @@
 //#include "hformat.h"
 #include "util.h"
 
-#define BOOT1 0x77 /**< Define o conte˙do do primeiro setor de boot. */
-#define BOOT2 0x33 /**< Define o conte˙do do segundo setor de boot. */
-#define BOOT_PATH "boot.bin" /**< Define a localizaÁ„o do arquivo que contÈm as informaÁıes do boot. */
+#define BOOT1 0x33 /**< Define o conte√∫do do pen√∫ltimo setor de boot. */
+#define BOOT2 0xCC /**< Define o conte√∫do do √∫ltimo setor de boot. */
+#define BOOT_PATH "boot.bin" /**< Define a localiza√ß√£o do arquivo que cont√©m as informa√ß√µes do boot. */
 //#define DISK_NAME "disco"
-#define HPSYS_PATH "hpsys" /**< Define a localizaÁ„o do HPSYS */
+#define HPSYS_PATH "hpsys" /**< Define a localiza√ß√£o do HPSYS. */
 #define SIZE_SEC 512 /**< Define o tamanho de segmento a ser utilizado no sistema de arquivos */
-#define MIN_DISK_SIZE (256) /**< Define o tamanho minÌmo que um disco a ser formatado deve ter */
-#define MAX_DISK_SIZE ( 1024 * 1024 * 2) /**< Define o tamanho m·ximo que um disco a ser formatado poder· ter */
+#define MIN_DISK_SIZE (256) /**< Define o tamanho min√≠mo que um disco a ser formatado deve ter */
+#define MAX_DISK_SIZE ( 1024 * 1024 * 2) /**< Define o tamanho m√°ximo que um disco a ser formatado poder√° ter */
 
-char DISK_NAME[255]; /**< Vari·vel que ir· conter o nome do disco a ser utilizado */
-int DISK_SIZE; /**< Vari·vel que indica o tamanho do disco a ser utilizado */
-FILE *disk; /**< Vari·vel utilizada para referenciar o disco que estar· sendo utilizado */
+char DISK_NAME[255]; /**< Vari√°vel que ir√° conter o nome do disco a ser utilizado */
+int DISK_SIZE; /**< Vari√°vel que indica o tamanho do disco a ser utilizado */
+FILE *disk; /**< Vari√°vel utilizada para referenciar o disco que estar√° sendo utilizado */
 
 /**
  * @fn int save_boot()
- * @brief FunÁ„o respons·vel por salvar os dois setores de boot no disco.
+ * @brief Fun√ß√£o respons√°vel por salvar os dois setores de boot no disco.
  * @return 1 Caso tenha sido bem sucedido a carga do boot.
-*/
+ */
 int save_boot() {
-	FILE *boot_file; /* Variavel que ser· utilizada para abrir o arquivo contendo o boot. */
-	char boot_content[SIZE_SEC*2]; /* Variavel que sera utilizada para transferÍncia do boot de seu arquivo original para o seu destino em disco. */
+	FILE *boot_file; /* Variavel que ser√° utilizada para abrir o arquivo contendo o boot. */
+	char boot_content[SIZE_SEC*2]; /* Variavel que sera utilizada para transfer√™ncia do boot de seu arquivo original para o seu destino em disco. */
 	struct stat info_boot; /* Variavel utilizada para armazenar o estado do arquivo do setor de boot. */
 
-	/* verifica se È possÌvel abriro arquivo de boot */
+	/* verifica se √© poss√≠vel abriro arquivo de boot */
 	if ( (boot_file = fopen(BOOT_PATH, "rb")) == NULL ) {
 		debug("Erro na abertura de boot");
 	} else {
@@ -56,13 +56,13 @@ int save_boot() {
 
 /**
  * @fn int save_so()
- * @brief FunÁ„o respons·vel por salvar o sistema operacional no disco.
+ * @brief Fun√ß√£o respons√°vel por salvar o sistema operacional no disco.
 * @return 1 Caso tenha sido bem sucedido a carga do sistema operacional para o disco. 
  */
 int save_so() {
 	FILE *hpsys; /* Variavel que sera utilizada para a abertura do arquivo do HPSYS. */
-	char *buffer; /* Variavel que sera utilizada para transferÍncia do arquivo do HPSYS para o seu destino no disco */
-	char info_hpsys_str[100]; /* variavel que armazena a mensagem que contÈm o tamanho do HPSYS */
+	char *buffer; /* Variavel que sera utilizada para transfer√™ncia do arquivo do HPSYS para o seu destino no disco */
+	char info_hpsys_str[100]; /* variavel que armazena a mensagem que cont√©m o tamanho do HPSYS */
 	struct stat info_hpsys; /* Variavel utilizada para armazenar o estado do arquivo do HPSYS. */
 
 	/* abertura do hpsys */
@@ -78,10 +78,10 @@ int save_so() {
 	debug(info_hpsys_str);
 	/* fim parte debug hpsys */
 
-	/* deslocando para o 3∫ setor */
+	/* deslocando para o 3¬∫ setor */
 	fseek(disk, 2*SIZE_SEC, SEEK_SET);
 
-	/* copiando hpsys para o 3∫ setor */
+	/* copiando hpsys para o 3¬∫ setor */
 	buffer = (char *) malloc( info_hpsys.st_size );
 	fread(buffer, sizeof(char), info_hpsys.st_size, hpsys);
 	fwrite(buffer, sizeof(char), info_hpsys.st_size, disk);
@@ -92,7 +92,7 @@ int save_so() {
 
 /**
  * @fn int save_bitmap()
- * @brief FunÁ„o respons·vel por salvar o mapa de bits no disco.
+ * @brief Fun√ß√£o respons√°vel por salvar o mapa de bits no disco.
  * @return 1 Caso tenha sido bem sucedido a carga do mapa de bits para o disco.
  */
 int save_bitmap() {
@@ -101,15 +101,16 @@ int save_bitmap() {
 
 /**
  * @fn int save_root()
- * @brief FunÁ„o respons·vel por salvar o diretÛrio raiz no disco.
- * @return 1 Caso tenha sido bem sucedido a criaÁ„o da diretÛrio raiz.
+ * @brief Fun√ß√£o respons√°vel por salvar o diret√≥rio raiz no disco.
+ * @return 1 Caso tenha sido bem sucedido a cria√ß√£o da diret√≥rio raiz.
  */
 int save_root() {
 	return 1;
 }
 
 /**
- * @brief FunÁ„o que realiza a abertura do disco a ser salvo.
+ * @fn int open_disk()
+ * @brief Fun√ß√£o que realiza a abertura do disco a ser salvo.
  * @return 1 Caso tenha sido bem sucedido a abertura do disco.
  * @return 0 Caso tenha ocorrido um erro na abertura do arquivo.
  */
@@ -119,15 +120,15 @@ int open_disk() {
 
 /**
  * @fn int format_disk()
- * @brief FunÁ„o que formata o disco a ser utilizado.
- * @return 1 Caso a formataÁ„o tenha sido bem sucedida.
-  */
+ * @brief Fun√ß√£o que formata o disco a ser utilizado.
+ * @return 1 Caso a formata√ß√£o tenha sido bem sucedida.
+ */
 int format_disk() {
-	int i; /* Vari·vel utilizada como contador para percorrer os setores do disco */
-	char nulo=0; /* Vari·vel utilizada como conte˙do para os setores do disco a serem preenchidos */
-	char msg[100]; /* Vari·vel que ir· guardar amensagem que indica o tamanho do disco encontrado */
+	int i; /* Vari√°vel utilizada como contador para percorrer os setores do disco */
+	char nulo=0; /* Vari√°vel utilizada como conte√∫do para os setores do disco a serem preenchidos */
+	char msg[100]; /* Vari√°vel que ir√° guardar amensagem que indica o tamanho do disco encontrado */
 
-	/* Verifica se È possÌvel abrir o disco */
+	/* Verifica se √© poss√≠vel abrir o disco */
 	if (!open_disk()) {
 		debug("erro na abertura do arquivo de disco");
 		exit(EXIT_FAILURE);
@@ -151,19 +152,19 @@ int format_disk() {
 
 /**
  * @fn int main(int argc, char *argv[])
- * @brief FunÁ„o principal do hformat.c, respons·vel por chamar as subrotinas e verificar se os parametros foram passados corretamente.
- * @param argc indica o n˙mero de parametros repassados pela linha de comando.
+ * @brief Fun√ß√£o principal do hformat.c, respons√°vel por chamar as subrotinas e verificar se os parametros foram passados corretamente.
+ * @param argc indica o n√∫mero de parametros repassados pela linha de comando.
  * @param argv string que representa os parametros repassados na linha de comando.
- * @return 1 Se a operaÁ„o de formataÁ„o do disco foi bem sucedida.
+ * @return 1 Se a opera√ß√£o de formata√ß√£o do disco foi bem sucedida.
  */
 int main(int argc, char *argv[]) {
-	struct stat info_disk;
-	char desc[100];
-	FILE *fp;
+	struct stat info_disk; /* estrutura que armazena as informa√ß√µes de estado do arquivo que representa o disco */
+	char desc[100]; /* Variavel que armazena a mensagem de erro caso o tamanho do disco encontrado sej√° invalido */
+	FILE *fp; /* Variavel que representa o arquivo do disco a ser formatado */
 	
 	debug("Iniciando HFORMAT");
 
-	/* Verifica se o n˙mero de parametros repassados È 2 */
+	/* Verifica se o n√∫mero de parametros repassados √© 2 */
 	if (argc != 2)
 		print_error("0x0001", "Numero de parametros incorretos", 1);
 
@@ -172,7 +173,7 @@ int main(int argc, char *argv[]) {
 		print_error("0x0002", "Arquivo de disco nao encontrado", 1);
 	fclose(fp);
 
-	/* Verifica se o tamanho do disco È v·lido (os limites mÌnimos e m·ximos s„o definidos no Ìnicio do arquivo  */
+	/* Verifica se o tamanho do disco √© v√°lido (os limites m√≠nimos e m√°ximos s√£o definidos no √≠nicio do arquivo  */
 	if (!stat(argv[1], &info_disk) && info_disk.st_size / 1024 >= MIN_DISK_SIZE && info_disk.st_size / 1024 <= MAX_DISK_SIZE)
 		goto valid_disk_size;
 	else {
