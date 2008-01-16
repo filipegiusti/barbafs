@@ -12,7 +12,8 @@
 typedef char endereco_disco[2];
 
 /**
- * Mapa de páginas de um arquivo que não é do tipo diretório, esta situado na área de dados do disco.
+ * @struct mapa_paginas
+ * @brief Mapa de páginas de um arquivo que não é do tipo diretório, esta situado na área de dados do disco.
  */
 struct mapa_paginas {
 	char tam[2]; /**< Indica o tamanho total do arquivo. */
@@ -20,7 +21,8 @@ struct mapa_paginas {
 };
 
 /**
- * Indicador do tipo de arquivo.
+ * @enum tipo_arquivo
+ * @brief Indicador do tipo de arquivo.
  */
 enum tipo_arquivo {
 	bin, /**< Arquivo do tipo binário. */
@@ -32,7 +34,8 @@ enum tipo_arquivo {
 };
 
 /**
- * Estrutura que representa o descritor de um arquivo.
+ * @struct descritor_arquivos
+ * @brief Estrutura que representa o descritor de um arquivo.
  */
 struct descritor_arquivos {
 	char nome[12]; /**< Indica o nome do arquivo descrito. */
@@ -42,10 +45,11 @@ struct descritor_arquivos {
 };
 
 /**
- * Mapa de arquivos de um diretório.
+ * @struct mapa_arquivos
+ * @brief Mapa de arquivos de um diretório.
  */
 struct mapa_arquivos {
-	char quantidade[2]; /**< Indica ? */
+	char quantidade[2]; /**< Indica  a quantidade de arquivos  existentes em arquivos[] */
 	endereco_disco self; /**< Aponta para o endereço atual do arquivo em questão. */
 	endereco_disco pai; /**< Aponta para o endereço do pai do arquivo em questão. */
 	endereco_disco arquivos[253]; /**< Endereço dos arquivos contidos no diretório. */
