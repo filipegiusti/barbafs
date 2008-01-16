@@ -1,3 +1,11 @@
+/**
+ * @file hreset.c
+ * @brief Executável responsável pela indicação do disco virtual e identificação do disco a ser utilizado.
+ * @author Filipe Giusti
+ *  @version 1.0
+ *  @date    16/01/2007
+ */
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
