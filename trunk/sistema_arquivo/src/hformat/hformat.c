@@ -28,6 +28,9 @@ int save_boot() {
 	} else {
 		fseek(disk, 0, SEEK_SET);
 		stat(BOOT_PATH, &info_boot);
+		if (info_boot.st_size > 1024) {
+			print_error("0x005", "Tamanho do boot maior que 2 setores", 1);
+		}
 		fread(boot_content, sizeof(char), info_boot.st_size, boot_file);
 		fwrite(boot_content, sizeof(char), info_boot.st_size, disk);
 		fclose(boot_file);
@@ -109,17 +112,6 @@ int format_disk() {
 }
 
 
-/*
- * se should_exit == 1 mostra erro e termina programa (erro fatal)
- */
-
-void print_error(char *erro, char *descricao, int should_exit) {
-	printf("HFORMAT 0.4-160108 alpha\n");	
-	printf("------------------------\n");
-	printf("ERRO.....: %s\n", erro);
-	printf("DESCRICAO: %s\n\n", descricao);
-	(should_exit) ? exit(EXIT_FAILURE) : printf("\t"); 
-}
 
 
 int main(int argc, char *argv[]) {
