@@ -10,17 +10,12 @@ OBJ_FATORIAL = $(BASE_FATORIAL).o
 SRC_HFORMAT = $(BASE_HFORMAT).c
 OBJ_HFORMAT = $(BASE_HFORMAT).o
 
-SRC_MAIN = src/main.c
-OBJ_MAIN = main.bin
-
 OBJS = $(OBJ_FATORIAL) 
 
 SRC_TESTE = $(BASE_TESTE)_fatorial.c 
 OBJS_TESTE = $(BASE_TESTE).o 
 
 all: $(OBJS) hformat boot hreset 
-	$(CC) $(CFLAGS) $(INCLUDE) $(OBJS) $(SRC_MAIN) -o bin/$(OBJ_MAIN)
-
 
 fatorial: src/fatorial/fatorial.o
 	make -C src/fatorial
