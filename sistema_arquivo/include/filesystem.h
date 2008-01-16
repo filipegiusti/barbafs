@@ -1,5 +1,9 @@
 /**
- * Estruturas de dados do sistema de arquivos. Contém as 4 struct's e um typedef que são usados pelo sistema de arquivos.
+ * @file filesystem.h
+ * @brief Estruturas de dados do sistema de arquivos. Contém as 4 struct's e um typedef que são usados pelo sistema de arquivos.
+ * @author Elvio Viscosa, Filipe Giusti, Jerônimo Madruga, Leonardo Lobo, Mauro Kade.
+ *  @version 1.0
+ *  @date    16/01/2007
  */
 
 /**
