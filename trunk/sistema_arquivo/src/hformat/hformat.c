@@ -77,7 +77,7 @@ int save_root() {
 }
 
 
-int create_disk() {
+int open_disk() {
 	return (disk = fopen(DISK_NAME, "wb")) ? 1 : 0; 
 }
 
@@ -85,11 +85,14 @@ int create_disk() {
 int format_disk() {
 	int i;
 	char nulo=0;
+	char msg[100];
 
-	if (!create_disk()) {
+	if (!open_disk()) {
 		debug("erro na abertura do arquivo de disco");
 		exit(EXIT_FAILURE);
 	}
+	sprintf(msg, "Tamanho do disco encontrado = %d bytes", (int)DISK_SIZE);
+	debug(msg);
 
 	for (i=0; i < DISK_SIZE; i++) {
 		fwrite(&nulo, sizeof(char), 1, disk);	
@@ -121,12 +124,15 @@ void print_error(char *erro, char *descricao, int should_exit) {
 int main(int argc, char *argv[]) {
 	struct stat info_disk;
 	char desc[100];
+	FILE *fp;
 
 	if (argc != 2)
 		print_error("0x0001", "Numero de parametros incorretos", 1);
 
-	if (!fopen(argv[1], "r"))
+	if (!(fp = fopen(argv[1], "r")) )
 		print_error("0x0002", "Arquivo de disco nao encontrado", 1);
+
+	fclose(fp);
 
 	if (!stat(argv[1], &info_disk) && info_disk.st_size >= 130 && info_disk.st_size <= 4096)
 		goto valid_disk_size;
@@ -136,6 +142,7 @@ int main(int argc, char *argv[]) {
 	}
 
 valid_disk_size:
+	DISK_SIZE = info_disk.st_size;
 	debug("Iniciando HFORMAT");
 	format_disk();
 	return 0;
