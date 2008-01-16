@@ -38,11 +38,11 @@ struct descritor_arquivos {
 };
 
 /**
- * Mapa de arquivos.
+ * Mapa de arquivos de um diretório.
  */
 struct mapa_arquivos {
 	char quantidade[2]; /**< Indica ? */
 	endereco_disco self; /**< Aponta para o endereço atual do arquivo em questão. */
 	endereco_disco pai; /**< Aponta para o endereço do pai do arquivo em questão. */
-	endereco_disco arquivos[253]; /**< A complementar. */
+	endereco_disco arquivos[253]; /**< Endereço dos arquivos contidos no diretório. */
 };
