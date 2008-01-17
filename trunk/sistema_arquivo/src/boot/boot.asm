@@ -1,12 +1,12 @@
 section .data
-	arq_exec_tmp:	db 'temp.exe'	; Arquivo com o código do kernel pra ser executado
+	arq_exec_tmp:	db 'temp.exe'	; Arquivo temporário que irá conter o código do kernel pra ser executado
 	tam_hpsys:	equ 1000	; Tamanho do sistema operacional
 
 section .bss
-	buffer:		resb tam_hpsys	; Buffer para a transferencia de memoria dos arquivos
+	buffer:		resb tam_hpsys	; Buffer para a transferencia de entre os arquivos
 	DA_tempexe:	resd 1		; Descritor do arquivo temp.exe
 	DA_disco:	resd 1		; Descritor do arquivo onde está o disco
-
+;	tam_hpsys:	resd 1		; Tamanho do kernel
 
 section .text
 	global _start
@@ -15,6 +15,8 @@ _start:	mov	eax, 5		; sys_open
 	pop	ebx		; Recebe o argc
 	pop	ebx		; Recebe o argv[0] que é o nome do programa
 	pop	ebx		; Recebe o argv[1]
+;	pop	edx		; Recebe o argv[2]
+;	mov	[tam_hpsys], edx; Salva o argv[2]
 	mov	ecx, 0		; modo de abertura read_only
 	int	80h
 	mov	[DA_disco], eax	; Salva o descritor do arquivo
