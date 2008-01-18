@@ -4,7 +4,7 @@ section .data
 	end_bitmap:	dw	0
 	tam_so:		dw	0
 	marc1:		db	0x33
-	arc2:		db	0xff
+	arc2:		db	0xCC
 	tam_hpsys:	equ 1000	; Tamanho do sistema operacional
 
 section .bss
