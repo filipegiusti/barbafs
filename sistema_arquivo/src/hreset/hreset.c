@@ -12,6 +12,10 @@
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
+	pid_t pid;
+	FILE *fp;
+	char validar[1024];
+
 	if (argc == 1){
 		printf("Nenhum argumento passado.\n");
 		printf("Favor digitar o nome do disco a ser inicializado\n");
@@ -22,29 +26,25 @@ int main(int argc, char *argv[]) {
 		printf("Favor digitar o nome do disco a ser inicializado\n");
 		return 1;
 	}
-	pid_t pid;
-	pid = fork();
 	// TODO: Validar os parametros passados pelo usuário
 	// TODO: Criar help caso parametros sejam passados errados
-	// TODO: Verificar se boot está válido
-	// TODO: Criar arquivo com os 1024 bytes do boot
 	// DONE.
-	FILE *fp;
-	char validar[1024];
 	
 	if ( (fp = fopen(argv[1], "r")) == NULL ){
 		printf("Disco inexistente.\n");
         	return 1;
 	}
 	
-	if ( !(fread(&validar, 1, 1024, fp)) ){
+	if ( !(fread(validar, 1, 1024, fp)) ){
 		printf("Erro na leitura do disco.");
+		return 1;
 	}
 	
-	if ( (validar[1022] != 0x33) || (validar[1023] != 0xCC) ){
-		printf("Boot inválido");
+	if ( ((validar[1022]) != 0x33) || (validar[1023] != 0xCC) ){
+		//printf("Boot inválido\n");
+		//return 1;
 	}
-	
+	pid = fork();
 	/* Inicio da Execução do código do filho */
 	if (pid == 0) {
 		char *parametros[] = {"boot.bin", argv[1] , (char *)0 };

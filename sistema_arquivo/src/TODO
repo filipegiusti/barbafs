@@ -1,13 +1,10 @@
 boot.asm:
 	Criar cabeçalho de documentação
-	Gerar arquivo de exatos 1024 bytes
-	Colocar os marcadores no final
 	Ler o tamanho do hpsys do final do boot
 
 hformat:
-	Criar help pro usuario
-	Adicionar flag pra dizer o tamanho do arquivo
 	Colocar o código do boot dentro do hformat
+	Escrever diretório raiz
 
 hreset:
 	Encontrar uma maneira de carregar o boot na memória e mandar executar de lá, sem precisar criar um nova arquivo pra isso
