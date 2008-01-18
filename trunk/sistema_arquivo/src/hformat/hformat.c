@@ -15,13 +15,12 @@
 #define BOOT1 0x33 /**< Define o conteúdo do penúltimo setor de boot. */
 #define BOOT2 0xCC /**< Define o conteúdo do último setor de boot. */
 #define BOOT_PATH "boot.bin" /**< Define a localização do arquivo que contém as informações do boot. */
-#define HPSYS_PATH "hpsys" /**< Define a localização do HPSYS. */
+#define HPSYS_PATH "hpsys.bin" /**< Define a localização do HPSYS. */
 #define SIZE_SEC 512 /**< Define o tamanho de segmento a ser utilizado no sistema de arquivos */
 #define MIN_DISK_SIZE ( 512 * SIZE_SEC ) /**< Define o tamanho mínimo em bytes que um disco a ser formatado deve ter */
 #define MAX_DISK_SIZE ( 4096 * SIZE_SEC ) /**< Define o tamanho máximo em bytes que um disco a ser formatado poderá ter */
 
 struct stat info_disk; /**< Estrutura que armazena as informações de estado do arquivo que representa o disco */
-char DISK_NAME[255]; /**< Variável que irá conter o nome do disco a ser utilizado */
 FILE *disk; /**< Variável utilizada para referenciar o disco que estará sendo utilizado */
 
 int save_boot(short int tam_hpsys);
@@ -41,16 +40,11 @@ int save_boot(short int tam_hpsys) {
 	char boot_content[SIZE_SEC*2]; /* Variável que sera utilizada para transferência do boot de seu arquivo original para o seu destino em disco. */
 	struct stat info_boot; /* Variável utilizada para armazenar o estado do arquivo do setor de boot. */
 
+	debug("save_boot()");
 	/* verifica se é possível abrir o arquivo de boot */
-	if ( (boot_file = fopen(BOOT_PATH, "rb")) == NULL ) {
-		char *error_msg; /* Irá conter a mensagem "Não foi possivel abrir o arquivo " + tamanho do BOOT_PATH*/
-		error_msg = malloc( strlen(BOOT_PATH) + strlen("Não foi possivel abrir o arquivo ") + 1 );
-		if ( error_msg == NULL ) {
-			debug("Faltou memória dentro de save_boot()");
-			print_error("0x667", "Memória insuficiente", 1);
-		}
-		strcpy(error_msg, "Não foi possivel abrir o arquivo ");
-		strcat(error_msg, BOOT_PATH);
+	if ( (boot_file = fopen(BOOT_PATH, "r")) == NULL ) {
+		char error_msg[100]; /* Irá conter a mensagem de erro */
+		sprintf(error_msg, "Não foi possivel abrir o arquivo %s", BOOT_PATH);
 		print_error("0x666", error_msg, 1);
 	}
 	fseek(disk, 0, SEEK_SET);
@@ -65,8 +59,8 @@ int save_boot(short int tam_hpsys) {
 	
 	/* Grava o código do boot e o tamanho do hpsys */
 	fseek(disk, (2*SIZE_SEC)-6-1, SEEK_SET); /* 6 é a soma de 2 short int mais 2 bytes pros marcadores e -1 pra acertar a referência */
-	fwrite(tam_hpsys+2, sizeof(short int), 1, disk); /* Início bitmap de setores livres *///TODO: Tratar erro
-	fwrite(tam_hpsys, sizeof(short int), 1, disk); //TODO: Tratar erro
+	fwrite(&tam_hpsys, sizeof(short int), 1, disk); /* Início bitmap de setores livres *///TODO: Tratar erro e ESTA ERRADO O VALOR
+	fwrite(&tam_hpsys, sizeof(short int), 1, disk); //TODO: Tratar erro
 
 	debug("BOOT salvo");
 	return 1;
@@ -83,7 +77,7 @@ short int save_so() {
 	char info_hpsys_str[100]; /* Variável que armazena a mensagem de debug que contém o tamanho do HPSYS */
 	struct stat info_hpsys; /* Variável utilizada para armazenar o estado do arquivo do HPSYS. */
 	int tam_so_gravado; /* Em bytes */
-
+	
 	/* abertura do hpsys */
 	hpsys = fopen(HPSYS_PATH, "rb");
 	if (!hpsys) {
@@ -122,12 +116,18 @@ short int save_so() {
  * @return 1 Caso tenha sido bem sucedido a carga do mapa de bits para o disco.
  */
 int save_bitmap(short int tam_hpsys) {
-	/*int i, j = 0;
-	struct bitmap_blocos_livres bitmap;
-	int ocupados_inicialmente = 2 + tam_hpsys + 1 + 2;
-	for(i = 0 ; i < info_disk.st_size ; i++) {
-		bitmap.sist_map[i] = ocupados_inicialmente ? 1 : 0;
-	}*/
+	int i, j = 0;
+	char bitmap[SIZE_SEC];
+	int setores_ocupados_inicialmente = 2 + tam_hpsys + 1 + 2; /* Boot + hpsys + bitmap + descritores do arquivos */
+	for(i = 0 ; i < setores_ocupados_inicialmente ; i++) {
+		if ( !(i%8) ) {
+			j = 1;
+		}
+		bitmap[i/8] += j;
+		j <<= 1;
+	}
+	fseek(disk, setores_ocupados_inicialmente-1, SEEK_SET);
+	fwrite(bitmap, sizeof(char), SIZE_SEC, disk);
 	return 1;
 }
 
@@ -161,6 +161,8 @@ int format_disk() {
 
 	debug("Disco Formatado");
 	tam_so = save_so();
+	sprintf(msg, "Tamanho do so gravado = %d setores", tam_so);
+	debug(msg);
 	tam_so *= 1.5;
 	save_boot(tam_so);
 	save_bitmap(tam_so);
@@ -183,14 +185,13 @@ int main(int argc, char *argv[]) {
 	if (argc != 2)
 		print_error("0x0001", "Numero de parametros incorretos", 1); // TODO: Ensinar o usuário como usar o hformat
 
-	strcpy(DISK_NAME, argv[1]);
 	/* Verifica se o arquivo com o nome do disco existe */
-	if (!(disk = fopen(DISK_NAME, "w"))) {
+	if (!(disk = fopen(argv[1], "r+"))) {
 		print_error("0x0002", "Arquivo de disco nao encontrado", 1);
 	}
 
 	/* Verifica se o tamanho do disco é válido */
-	stat(DISK_NAME, &info_disk);
+	stat(argv[1], &info_disk);
 	if ( info_disk.st_size < MIN_DISK_SIZE || info_disk.st_size > MAX_DISK_SIZE ) {
 		char desc[100]; /* Variável que armazena a mensagem de erro */
 		sprintf(desc, "Tamanho do disco encontrado (%2.2f KB) invalido. O tamanho deve ser entre %d e %d KB", (float)info_disk.st_size/1024, MIN_DISK_SIZE/1024, MAX_DISK_SIZE/1024);
