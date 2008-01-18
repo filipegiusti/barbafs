@@ -24,25 +24,20 @@
 struct stat info_disk; /**< Estrutura que armazena as informações de estado do arquivo que representa o disco */
 char DISK_NAME[255]; /**< Variável que irá conter o nome do disco a ser utilizado */
 FILE *disk; /**< Variável utilizada para referenciar o disco que estará sendo utilizado */
+int DISK_SIZE; /**< Tamanho que o disco terá, caso precise criar um disco */
+int FORMAT_TYPE; /**< Opção de formatação */
+enum {USING_DISK, CREATING_DISK, CREATING_SIZEDDISK}; /**<
+ * define os tipos de format que poderao ser usados 
+ * 1 - disco ja existe, apenas formata
+ * 2 - disco nao existe, cria com valor minimo e formata
+ * 3 - disco nao existe, tamanho definido pelo argv. Cria e formata
+ * */
 
 int save_boot(short int tam_hpsys);
 short int save_so();
 int save_bitmap(short int tam_hpsys);
 int save_root(short int tam_hpsys);
 int format_disk();
-
-/*
- * define os tipos de format que poderao ser usados 
- * 1 - disco ja existe, apenas formata
- * 2 - disco nao existe, cria com valor minimo e formata
- * 3 - disco nao existe, tamanho definido pelo argv. Cria e formata
- * */
-enum {USING_DISK, CREATING_DISK, CREATING_SIZEDDISK};
-/* variavel que armazena opcao de format */
-int FORMAT_TYPE;
-
-/* tamanho que o disco tera, caso precise criar um disco */
-int DISK_SIZE;
 
 /**
  * @fn int save_boot(int tam_hpsys)
@@ -65,11 +60,11 @@ int save_boot(short int tam_hpsys) {
 	fseek(disk, 0, SEEK_SET);
 	stat(BOOT_PATH, &info_boot);
 	/* verifica se o tamanho do boot a ser caregado corresponde ao tamanho de dois setores */
-	if (info_boot.st_size > 2*SIZE_SEC) {
+	/*if (info_boot.st_size > 2*SIZE_SEC) {
 		print_error("0x005", "Tamanho do boot maior que 2 setores", 1);
-	}
-	fread(boot_content, sizeof(char), info_boot.st_size, boot_file); //TODO: Tratar erro
-	fwrite(boot_content, sizeof(char), info_boot.st_size, disk); //TODO: Tratar erro
+	}*/ // TODO: Comentando até achar uma solução melhor pro boot.bin
+	fread(boot_content, sizeof(char), SIZE_SEC*2, boot_file); //TODO: Tratar erro
+	fwrite(boot_content, sizeof(char), SIZE_SEC*2, disk); //TODO: Tratar erro
 	fclose(boot_file);
 
 	/* Grava o código do boot e o tamanho do hpsys */
@@ -96,14 +91,8 @@ short int save_so() {
 	/* abertura do hpsys */
 	hpsys = fopen(HPSYS_PATH, "rb");
 	if (!hpsys) {
-		char *error_msg; /* Irá conter a mensagem "Não foi possivel abrir o arquivo " + tamanho do HPSYS_PATH*/
-		error_msg = malloc( strlen(HPSYS_PATH) + strlen("Não foi possivel abrir o arquivo ") + 1 );
-		if ( error_msg == NULL ) {
-			debug("Faltou memória dentro de save_so()");
-			print_error("0x667", "Memória insuficiente", 1);
-		}
-		strcpy(error_msg, "Não foi possivel abrir o arquivo ");
-		strcat(error_msg, HPSYS_PATH);
+		char error_msg[100]; /* Mensagem de erro */
+		sprintf(error_msg, "Não foi possivel abrir o arquivo %s", HPSYS_PATH);
 		print_error("0x668", error_msg, 1);
 	}
 
@@ -128,6 +117,7 @@ short int save_so() {
 /**
  * @fn int save_bitmap()
  * @brief Função responsável por salvar o mapa de bits no disco.
+ * @param tam_hpsys Tamanho em setores do hpsys que foi gravado.
  * @return 1 Caso tenha sido bem sucedido a carga do mapa de bits para o disco.
  */
 int save_bitmap(short int tam_hpsys) {
@@ -141,7 +131,8 @@ int save_bitmap(short int tam_hpsys) {
 		bitmap[i/8] += j;
 		j <<= 1;
 	}
-	fseek(disk, setores_ocupados_inicialmente-1, SEEK_SET);
+	//printf("hpsys: %d\nbitmap: %s\n", tam_hpsys, bitmap);
+	fseek(disk, (setores_ocupados_inicialmente)*SIZE_SEC, SEEK_SET);
 	fwrite(bitmap, sizeof(char), SIZE_SEC, disk);
 	return 1;
 }
@@ -149,6 +140,7 @@ int save_bitmap(short int tam_hpsys) {
 /**
  * @fn int save_root()
  * @brief Função responsável por salvar o diretório raiz no disco.
+ * @param tam_hpsys Tamanho em setores do hpsys que foi gravado.
  * @return 1 Caso tenha sido bem sucedido a criação da diretório raiz.
  */
 int save_root(short int tam_hpsys) {
@@ -166,7 +158,6 @@ int format_disk() {
 	short int tam_so; /* Tamanho em setores */
 	char msg[100];
 
-	//sprintf(msg, "Tamanho do disco encontrado = %d bytes", (int)info_disk.st_size);
 	if (FORMAT_TYPE == CREATING_DISK)
 		debug("Criando disco");
 	else if (FORMAT_TYPE == USING_DISK)
@@ -195,6 +186,13 @@ int format_disk() {
 	return 1;
 }
 
+/**
+ * @fn int file_exist(char *file_path)
+ * @brief Verifica se um arquivo existe.
+ * @param file_path Path do arquivo a ser testado
+ * @return 1 Arquivo existe
+ * @return 0 Arquivo não existe
+ */
 int file_exist(char *file_path) {
 	FILE *fp;
 	if ( (fp = fopen(file_path, "r")) != NULL )
@@ -203,8 +201,12 @@ int file_exist(char *file_path) {
 	return 0;
 }
 
-/* 
- * Posso usar
+
+/**
+ * @fn int file_exist(char *file_path)
+ * @brief Imprime o texto de help
+ * 
+ * Pode-se usar
  * ./hformat disco (disco nao existe)
  * ./hformat disco (disco ja existe)
  * ./hformat -s 5000 disco (disco nao existe)
@@ -214,11 +216,17 @@ void hformat_help() {
 	printf("\nHFORMAT - Ajuda\n\n");
 	printf("./hformat disco -- se disco nao existe, cria disco com tamanho minimo e formata\n");
 	printf("./hformat disco -- se existe, formata disco\n");
-	printf("./hformat -s tam disco -- cria disco com tamanho tam(em Kb) e formata. \n\n");
+	printf("./hformat -s tam disco -- cria disco com tamanho tam(em Kb) e formata. \n\n"); //TODO: alterar pra usuário entrar com o numero de setores
 	printf("./hformat -h|--help -- Mostra esta ajuda. \n\n");
 	exit(EXIT_FAILURE);
 }
 
+/**
+ * @fn void filter_argv(int argc, char **argv)
+ * @brief TODO: Coloca na conta do Elvio a documentação
+ * @param argc TODO
+ * @param argv TODO
+ */
 void filter_argv(int argc, char **argv) {
 	struct stat disco_info;
 	float size_from_argv;
@@ -235,7 +243,7 @@ void filter_argv(int argc, char **argv) {
 		// disco existe
 		else if (file_exist(argv[1])) {
 			stat(argv[1], &disco_info);
-			if (disco_info.st_size >= MIN_DISK_SIZE/1024 && disco_info.st_size <= MAX_DISK_SIZE/1024) {
+			if (disco_info.st_size >= MIN_DISK_SIZE && disco_info.st_size <= MAX_DISK_SIZE) {
 				FORMAT_TYPE = USING_DISK;
 				DISK_SIZE = disco_info.st_size;
 				strcpy(DISK_NAME, argv[1]);
@@ -246,7 +254,7 @@ void filter_argv(int argc, char **argv) {
 		}
 		// disco nao existe && sem determinar tamanho
 		else {
-			if (strlen(argv[1]) > 7) {
+			if (strlen(argv[1]) > 7) { // TODO: q q é isso????
 				FORMAT_TYPE = CREATING_DISK;
 				DISK_SIZE = MAX_DISK_SIZE; 
 				strcpy(DISK_NAME, argv[1]);
@@ -257,7 +265,7 @@ void filter_argv(int argc, char **argv) {
 	}
 	else if (argc == 4) {
 		size_from_argv = atof(argv[2]);
-		size_from_argv /= 1024;
+		size_from_argv /= 1024; // TODO: numero do nada??? tem q documentar quando tem valores fixos voando por ai
 		if ( !strcmp(argv[1], "-s") ) {
 			if (size_from_argv >= MIN_DISK_SIZE/1024 && size_from_argv <= MAX_DISK_SIZE/1024) {
 				FORMAT_TYPE = CREATING_SIZEDDISK;
