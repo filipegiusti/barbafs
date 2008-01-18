@@ -1,14 +1,13 @@
 section .data
 	arq_exec_tmp:	db 'temp.exe'	; Arquivo temporário que irá conter o código do kernel pra ser executado
-			times	758 db 0 ; Reserva o espaço para poder colocar os marcadores e o tamanho do hpsys
+			times	742 db 0 ; Reserva o espaço para poder colocar os marcadores e o tamanho do hpsys
 	end_bitmap:	dw	0
 	tam_so:		dw	0
 	marc1:		db	0x33
 	arc2:		db	0xCC
-	tam_hpsys:	equ 1000	; Tamanho do sistema operacional
 
 section .bss
-	buffer:		resb tam_hpsys	; Buffer para a transferencia de entre os arquivos
+	buffer:		resb 1		; Buffer para a transferencia de entre os arquivos
 	DA_tempexe:	resd 1		; Descritor do arquivo temp.exe
 	DA_disco:	resd 1		; Descritor do arquivo onde está o disco
 
@@ -35,17 +34,20 @@ _start:	mov	eax, 5		; sys_open
 	mov	edx, 0		; metodo de posicionamento
 	int	80h
 
-	mov	eax, 3		; sys_read
+read:	mov	eax, 3		; sys_read
 	mov	ebx, [DA_disco]	; descritor do arquivo
 	mov	ecx, buffer	; Buffer para transferencia
-	mov	edx, tam_hpsys	; Quantidade de bytes pra ler
+	mov	edx, 1		; Quantidade de bytes pra ler
 	int	80h
 
 	mov	eax, 4		; sys_write
 	mov	ebx, [DA_tempexe]	; descritor do arquivo
 	mov	ecx, buffer	; Buffer para transferencia
-	mov	edx, tam_hpsys	; Quantidade de bytes pra escrever
+	mov	edx, 1		; Quantidade de bytes pra escrever
 	int	80h
+	dec word [tam_so]
+	cmp word [tam_so], 0
+	jne	read		; continua lendo e escrevendo ate tam_so ser igual a 0
 
 	mov	eax,1		; sys_exit
 	mov	ebx,0		; Código de retorno 0

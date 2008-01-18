@@ -1,10 +1,10 @@
 boot.asm:
 	Criar cabeçalho de documentação
-	Ler o tamanho do hpsys do final do boot
 
 hformat:
 	Colocar o código do boot dentro do hformat
 	Escrever diretório raiz
+	Está escrevendo errado o tamanho do hpsys
 
 hreset:
 	Encontrar uma maneira de carregar o boot na memória e mandar executar de lá, sem precisar criar um nova arquivo pra isso
