@@ -1,4 +1,5 @@
 boot.asm:
+	Criar cabeçalho de documentação
 	Gerar arquivo de exatos 1024 bytes
 	Colocar os marcadores no final
 	Ler o tamanho do hpsys do final do boot
@@ -13,3 +14,7 @@ hreset:
 
 hpsys:
 	Criar um dummy shell, só com a instrução shutdown funcionando
+
+filesystem:
+	Criar a documentação do cabeçalho
+	Colocar no .h as funções que existirão

@@ -15,7 +15,7 @@ OBJS = $(OBJ_FATORIAL)
 SRC_TESTE = $(BASE_TESTE)_fatorial.c 
 OBJS_TESTE = $(BASE_TESTE).o 
 
-all: $(OBJS) hformat boot hreset 
+all: $(OBJS) hformat boot hreset hpsys
 
 fatorial: src/fatorial/fatorial.o
 	make -C src/fatorial
@@ -28,6 +28,9 @@ boot:
 
 hreset:
 	make -C src/hreset
+
+hpsys:
+	make -C src/hpsys
 	
 	
 teste: $(OBJS) 
