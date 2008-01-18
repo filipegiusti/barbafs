@@ -49,6 +49,7 @@ int save_boot(short int tam_hpsys) {
 	FILE *boot_file; /* Variável que será utilizada para abrir o arquivo contendo o boot. */
 	char boot_content[SIZE_SEC*2]; /* Variável que sera utilizada para transferência do boot de seu arquivo original para o seu destino em disco. */
 	struct stat info_boot; /* Variável utilizada para armazenar o estado do arquivo do setor de boot. */
+	short int end_bitmap = (tam_hpsys+2)*SIZE_SEC;
 
 	debug("save_boot()");
 	/* verifica se é possível abrir o arquivo de boot */
@@ -69,8 +70,9 @@ int save_boot(short int tam_hpsys) {
 
 	/* Grava o código do boot e o tamanho do hpsys */
 	fseek(disk, (2*SIZE_SEC)-6-1, SEEK_SET); /* 6 é a soma de 2 short int mais 2 bytes pros marcadores e -1 pra acertar a referência */
-	fwrite(&tam_hpsys, sizeof(short int), 1, disk); /* Início bitmap de setores livres *///TODO: Tratar erro e ESTA ERRADO O VALOR
-	fwrite(&tam_hpsys, sizeof(short int), 1, disk); //TODO: Tratar erro
+	fwrite(&end_bitmap, sizeof(short int), 1, disk); /* Início bitmap de setores livres *///TODO: Tratar erro e ESTA ERRADO O VALOR
+	end_bitmap -= 2*SIZE_SEC;
+	fwrite(&end_bitmap, sizeof(short int), 1, disk); //TODO: Tratar erro
 
 	debug("BOOT salvo");
 	return 1;
