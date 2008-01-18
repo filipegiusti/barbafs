@@ -11,15 +11,16 @@
 #include <sys/wait.h>
 #include <stdio.h>
 
-int main(int agrc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	if (argc == 1){
 		printf("Nenhum argumento passado.\n");
 		printf("Favor digitar o nome do disco a ser inicializado\n");
-		return;
+		return 1;
 	}
 	if (argc > 2){
 		printf("Muitos argumentos.\n");
 		printf("Favor digitar o nome do disco a ser inicializado\n");
+		return 1;
 	}
 	pid_t pid;
 	pid = fork();
@@ -31,9 +32,9 @@ int main(int agrc, char *argv[]) {
 	FILE *fp;
 	char validar[1024];
 	
-	if ( (fp = fopen(argv[1], "rb")) == NULL ){
+	if ( (fp = fopen(argv[1], "r")) == NULL ){
 		printf("Disco inexistente.\n");
-        return;
+        	return 1;
 	}
 	
 	if ( !(fread(&validar, 1, 1024, fp)) ){
@@ -47,9 +48,7 @@ int main(int agrc, char *argv[]) {
 	/* Inicio da Execução do código do filho */
 	if (pid == 0) {
 		char *parametros[] = {"boot.bin", argv[1] , (char *)0 };
-		// TODO: trocar funçaõ para execvp que recebe um descritor de arquivo
-		// ACHO QUE É ISSO, MAS VERIFI CA
-		if (execvp("boot.bin", parametros) == -1) {
+		if (execv("boot.bin", parametros) == -1) {
 			// TODO: Verificar a causa do erro do execv
 			// As causas de erros são várias, mas o codigo é -1 para todas
 			printf("Erro no execv.\n");
