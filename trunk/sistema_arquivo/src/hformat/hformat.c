@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <ctype.h>
 #include "util.h"
 
 #define BOOT1 0x33 /**< Define o conteúdo do penúltimo setor de boot. */
@@ -21,6 +22,7 @@
 #define MAX_DISK_SIZE ( 4096 * SIZE_SEC ) /**< Define o tamanho máximo em bytes que um disco a ser formatado poderá ter */
 
 struct stat info_disk; /**< Estrutura que armazena as informações de estado do arquivo que representa o disco */
+char DISK_NAME[255]; /**< Variável que irá conter o nome do disco a ser utilizado */
 FILE *disk; /**< Variável utilizada para referenciar o disco que estará sendo utilizado */
 
 int save_boot(short int tam_hpsys);
@@ -28,6 +30,19 @@ short int save_so();
 int save_bitmap(short int tam_hpsys);
 int save_root(short int tam_hpsys);
 int format_disk();
+
+/*
+ * define os tipos de format que poderao ser usados 
+ * 1 - disco ja existe, apenas formata
+ * 2 - disco nao existe, cria com valor minimo e formata
+ * 3 - disco nao existe, tamanho definido pelo argv. Cria e formata
+ * */
+enum {USING_DISK, CREATING_DISK, CREATING_SIZEDDISK};
+/* variavel que armazena opcao de format */
+int FORMAT_TYPE;
+
+/* tamanho que o disco tera, caso precise criar um disco */
+int DISK_SIZE;
 
 /**
  * @fn int save_boot(int tam_hpsys)
@@ -56,7 +71,7 @@ int save_boot(short int tam_hpsys) {
 	fread(boot_content, sizeof(char), info_boot.st_size, boot_file); //TODO: Tratar erro
 	fwrite(boot_content, sizeof(char), info_boot.st_size, disk); //TODO: Tratar erro
 	fclose(boot_file);
-	
+
 	/* Grava o código do boot e o tamanho do hpsys */
 	fseek(disk, (2*SIZE_SEC)-6-1, SEEK_SET); /* 6 é a soma de 2 short int mais 2 bytes pros marcadores e -1 pra acertar a referência */
 	fwrite(&tam_hpsys, sizeof(short int), 1, disk); /* Início bitmap de setores livres *///TODO: Tratar erro e ESTA ERRADO O VALOR
@@ -148,14 +163,24 @@ int save_root(short int tam_hpsys) {
 int format_disk() {
 	int i; /* Variável utilizada como contador para percorrer os setores do disco */
 	char nulo=0; /* Variável utilizada como conteúdo para os setores do disco a serem preenchidos */
-	char msg[100]; /* Variável que irá guardar amensagem que indica o tamanho do disco encontrado */
 	short int tam_so; /* Tamanho em setores */
+	char msg[100];
 
-	sprintf(msg, "Tamanho do disco encontrado = %d bytes", (int)info_disk.st_size);
-	debug(msg);
+	//sprintf(msg, "Tamanho do disco encontrado = %d bytes", (int)info_disk.st_size);
+	if (FORMAT_TYPE == CREATING_DISK)
+		debug("Criando disco");
+	else if (FORMAT_TYPE == USING_DISK)
+		debug("Usando disco");
+	else if (FORMAT_TYPE == CREATING_SIZEDDISK)
+		debug("Criando disco com -s");
 
+	if ( (disk = fopen(DISK_NAME, "wb")) == NULL ) {
+		debug("Erro na abertura do disco. Abortando");
+		exit(EXIT_FAILURE);
+	}
+	
 	/* Caso o disco tenha sido aberto com sucesso, preenche cada um dos seus setores com o valor 0. */
-	for (i=0; i < info_disk.st_size; i++) {
+	for (i=0; i < DISK_SIZE; i++) {
 		fwrite(&nulo, sizeof(char), 1, disk);
 	}
 
@@ -170,6 +195,84 @@ int format_disk() {
 	return 1;
 }
 
+int file_exist(char *file_path) {
+	FILE *fp;
+	if ( (fp = fopen(file_path, "r")) != NULL )
+		return 1;
+
+	return 0;
+}
+
+/* 
+ * Posso usar
+ * ./hformat disco (disco nao existe)
+ * ./hformat disco (disco ja existe)
+ * ./hformat -s 5000 disco (disco nao existe)
+ *
+ * */
+void hformat_help() {
+	printf("\nHFORMAT - Ajuda\n\n");
+	printf("./hformat disco -- se disco nao existe, cria disco com tamanho minimo e formata\n");
+	printf("./hformat disco -- se existe, formata disco\n");
+	printf("./hformat -s tam disco -- cria disco com tamanho tam(em Kb) e formata. \n\n");
+	printf("./hformat -h|--help -- Mostra esta ajuda. \n\n");
+	exit(EXIT_FAILURE);
+}
+
+void filter_argv(int argc, char **argv) {
+	struct stat disco_info;
+	float size_from_argv;
+	char str_erro[100];
+
+	if (argc != 2 && argc != 4) {
+		hformat_help();
+	} 
+
+	if (argc == 2) {
+		if ( !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
+			hformat_help();
+		} 
+		// disco existe
+		else if (file_exist(argv[1])) {
+			stat(argv[1], &disco_info);
+			if (disco_info.st_size >= MIN_DISK_SIZE/1024 && disco_info.st_size <= MAX_DISK_SIZE/1024) {
+				FORMAT_TYPE = USING_DISK;
+				DISK_SIZE = disco_info.st_size;
+				strcpy(DISK_NAME, argv[1]);
+			} else {
+				sprintf(str_erro, "Tamanho especificado( %f Kb ) invalido", (float)disco_info.st_size);
+				print_error("0x0007", str_erro, 1);
+			}
+		}
+		// disco nao existe && sem determinar tamanho
+		else {
+			if (strlen(argv[1]) > 7) {
+				FORMAT_TYPE = CREATING_DISK;
+				DISK_SIZE = MAX_DISK_SIZE; 
+				strcpy(DISK_NAME, argv[1]);
+			} else {
+				print_error("0x0009", "Nome de arquivo invalido", 1);
+			}
+		}
+	}
+	else if (argc == 4) {
+		size_from_argv = atof(argv[2]);
+		size_from_argv /= 1024;
+		if ( !strcmp(argv[1], "-s") ) {
+			if (size_from_argv >= MIN_DISK_SIZE/1024 && size_from_argv <= MAX_DISK_SIZE/1024) {
+				FORMAT_TYPE = CREATING_SIZEDDISK;
+				DISK_SIZE = size_from_argv; 
+				strcpy(DISK_NAME, argv[3]);
+			} else {
+				sprintf(str_erro, "Tamanho especificado( %f Kb ) invalido", size_from_argv);
+				print_error("0x0007", str_erro, 1);
+			}
+		} else {
+			print_error("0x0007", "Opcao desconhecida", 1);
+		} 
+	}
+}
+
 /**
  * @fn int main(int argc, char *argv[])
  * @brief Função principal do hformat.c, responsável por chamar as subrotinas e verificar se os parâmetros foram passados corretamente.
@@ -178,25 +281,10 @@ int format_disk() {
  * @return 0 Se a operação de formatação do disco foi bem sucedida.
  */
 int main(int argc, char *argv[]) {
-	// TODO: Criar arquivo não importando se ele existe ou não.
 	debug("Iniciando HFORMAT");
 
-	/* Verifica se o número de parâmetros passados é 2 */
-	if (argc != 2)
-		print_error("0x0001", "Numero de parametros incorretos", 1); // TODO: Ensinar o usuário como usar o hformat
-
-	/* Verifica se o arquivo com o nome do disco existe */
-	if (!(disk = fopen(argv[1], "r+"))) {
-		print_error("0x0002", "Arquivo de disco nao encontrado", 1);
-	}
-
-	/* Verifica se o tamanho do disco é válido */
-	stat(argv[1], &info_disk);
-	if ( info_disk.st_size < MIN_DISK_SIZE || info_disk.st_size > MAX_DISK_SIZE ) {
-		char desc[100]; /* Variável que armazena a mensagem de erro */
-		sprintf(desc, "Tamanho do disco encontrado (%2.2f KB) invalido. O tamanho deve ser entre %d e %d KB", (float)info_disk.st_size/1024, MIN_DISK_SIZE/1024, MAX_DISK_SIZE/1024);
-		print_error("0x0003", desc, 1);
-	}
+	/* verifica o que foi passado para linha de comando */
+	filter_argv(argc, argv);
 
 	format_disk();
 	fclose(disk);
