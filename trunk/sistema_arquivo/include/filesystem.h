@@ -1,24 +1,27 @@
 /**
  * @file filesystem.h
- * @brief Estruturas de dados do sistema de arquivos. Contém as 4 struct's e um typedef que são usados pelo sistema de arquivos.
+ * @brief Chamadas do sistema de arquivos.
  * @author Elvio Viscosa, Filipe Giusti, Jerônimo Madruga, Leonardo Lobo, Mauro Kade.
- *  @version 1.0
- *  @date    16/01/2007
+ * @version 1.0
+ * @date    25/01/2007
  */
 
-/**
- * Uma posição dentro do disco o qual começa do setor 0.
- */
-typedef char endereco_disco[2];
+#define MAX_SIZE_NOME 11 /**< Tamanho m�ximo pra nomes de arquivo ou diret�rio. */
 
 /**
- * @struct mapa_paginas
- * @brief Mapa de páginas de um arquivo que não é do tipo diretório, esta situado na área de dados do disco.
+ * @enum modo_abertura_arquivo
+ * @brief Modos de abertura possiveis para um arquivo.
  */
-struct mapa_paginas {
-	char tam[2]; /**< Indica o tamanho total do arquivo. */
-	endereco_disco end_disco[255]; /**< Endereço da área de dados do arquivo. */
+enum modo_abertura_arquivo {
+	 READ,
+	 WRITE,
+	 READ_WRITE
 };
+
+/**
+ * Identificador de um arquivo aberto.
+ */
+typedef unsigned int arquivo;
 
 /**
  * @enum tipo_arquivo
@@ -33,24 +36,25 @@ enum tipo_arquivo {
 	dir /**< Arquivo representa um diretório. */
 };
 
-/**
- * @struct descritor_arquivos
- * @brief Estrutura que representa o descritor de um arquivo.
- */
-struct descritor_arquivos {
-	char nome[12]; /**< Indica o nome do arquivo descrito. */
-	enum tipo_arquivo tipo; /**< Indica o tipo de arquivo em questão. */
-	char protecao; /**< Atributo que indica o controle sobre eliminação ou gravação. */
-	endereco_disco mapa_pag; /**< Mapa de páginas do arquivo em questão. */
-};
-
-/**
- * @struct mapa_arquivos
- * @brief Mapa de arquivos de um diretório.
- */
-struct mapa_arquivos {
-	char quantidade[2]; /**< Indica  a quantidade de arquivos  existentes em arquivos[] */
-	endereco_disco self; /**< Aponta para o endereço atual do arquivo em questão. */
-	endereco_disco pai; /**< Aponta para o endereço do pai do arquivo em questão. */
-	endereco_disco arquivos[253]; /**< Endereço dos arquivos contidos no diretório. */
-};
+int bfs_create(char *caminho);
+int bfs_delete(char *caminho);
+arquivo bfs_open(char *caminho, enum modo_abertura_arquivo modo);
+int bfs_close(arquivo id);
+int bfs_read(arquivo id, char *buffer, int nbytes);
+int bfs_write(arquivo id, char *buffer, int nbytes);
+//TODO: int bfs_location_seek(arquivo id, int deslocamento, );
+char *bfs_get_nome(arquivo);
+char bfs_get_prot(arquivo);
+enum tipo_arquivo bfs_get_tipo(arquivo);
+int bfs_set_nome(char *nome);
+int bfs_set_prot(char prot);
+int bfs_set_tipo(enum tipo_arquivo);
+int bfs_create_dir(char *caminho);
+int bfs_delete_dir(char *caminho);
+int bfs_set_cwd(char *caminho);
+char *bfs_get_cwd();
+//TODO:
+//bfs_open_dir();
+//bfs_close_dir();
+//bfs_read_dir();
+//bfs_rewind_dir();

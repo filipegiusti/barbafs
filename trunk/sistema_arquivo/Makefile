@@ -46,7 +46,8 @@ clean:
 	rm -f bin/*
 	rm -f src/fatorial/*.o 
 	rm -f src/hreset/*.o 
-	rm -f src/boot/*.o 
+	rm -f src/boot/*.o
+	rm -f src/boot/*.lst 
 	rm -f src/hformat/*.o 
 	rm -f src/hpsys/*.o 
 	rm -f teste
