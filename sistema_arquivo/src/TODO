@@ -1,6 +1,3 @@
-boot.asm:
-	Criar cabeçalho de documentação
-
 hformat:
 	Colocar o código do boot dentro do hformat
 	Escrever diretório raiz
@@ -9,9 +6,8 @@ hformat:
 hreset:
 	Encontrar uma maneira de carregar o boot na memória e mandar executar de lá, sem precisar criar um nova arquivo pra isso
 
-hpsys:
-	Criar um dummy shell, só com a instrução shutdown funcionando
-
 filesystem:
 	Criar a documentação do cabeçalho
-	Colocar no .h as funções que existirão
+
+Makefile:
+	MELHORAR

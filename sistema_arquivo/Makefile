@@ -1,19 +1,24 @@
 CC = gcc
 CFLAGS = -Wall -g
 INCLUDE = -Iinclude/
+
+BASE_FILESYSTEM = src/filesystem/filesystem
 BASE_FATORIAL = src/fatorial/fatorial
 BASE_HFORMAT = src/hformat/hformat
 BASE_TESTE = testes/teste
+
+SRC_TESTE = $(BASE_TESTE)_main.c 
+
 SRC_FATORIAL = $(BASE_FATORIAL).c
 OBJ_FATORIAL = $(BASE_FATORIAL).o
 
 SRC_HFORMAT = $(BASE_HFORMAT).c
 OBJ_HFORMAT = $(BASE_HFORMAT).o
 
-OBJS = $(OBJ_FATORIAL) 
+OBJ_FILESYSTEM = $(BASE_FILESYSTEM).o
 
-SRC_TESTE = $(BASE_TESTE)_fatorial.c 
-OBJS_TESTE = $(BASE_TESTE).o 
+OBJS = $(OBJ_FATORIAL) $(OBJ_FILESYSTEM)
+
 
 all: $(OBJS) hformat shell boot hreset hpsys
 
@@ -37,7 +42,7 @@ hpsys:
 
 	
 	
-teste: $(OBJS) 
+teste: $(OBJS) $(SRC_TESTE)
 	$(CC) $(CFLAGS) -Iinclude/ $(OBJS) $(SRC_TESTE) -lcheck -o teste 
 	./teste
 
