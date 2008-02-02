@@ -82,6 +82,22 @@ char *bfs_get_cwd() {
 	printf("bfs_get_cwd dummy\n");
 }
 
+diretorio bfs_open_dir(char *caminho) {
+	printf("bfs_open_dir dummy\n");
+}
+
+int bfs_close_dir(diretorio dir) {{
+	printf("bfs_close_dir dummy\n");
+}
+
+int bfs_read_dir(diretorio dir, char *buffer_caminho) {{
+	printf("bfs_read_dir dummy\n");
+}
+
+int bfs_rewind_dir(diretorio dir) {{
+	printf("bfs_rewind_dir dummy\n");
+}
+
 // ======== Funções auxiliares
 
 /**

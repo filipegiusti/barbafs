@@ -24,6 +24,11 @@ enum modo_abertura_arquivo {
 typedef unsigned int arquivo;
 
 /**
+ * Identificador de um diretorio aberto.
+ */
+typedef unsigned int diretorio;
+
+/**
  * @enum tipo_arquivo
  * @brief Indicador do tipo de arquivo.
  */
@@ -43,7 +48,7 @@ int bfs_close(arquivo id);
 int bfs_read(arquivo id, char *buffer, int nbytes);
 int bfs_write(arquivo id, char *buffer, int nbytes);
 //TODO: int bfs_location_seek(arquivo id, int deslocamento, );
-char *bfs_get_nome(arquivo);
+int bfs_get_nome(arquivo, char *buffer_caminho);
 char bfs_get_prot(arquivo);
 enum tipo_arquivo bfs_get_tipo(arquivo);
 int bfs_set_nome(char *nome);
@@ -53,8 +58,7 @@ int bfs_create_dir(char *caminho);
 int bfs_delete_dir(char *caminho);
 int bfs_set_cwd(char *caminho);
 char *bfs_get_cwd();
-//TODO:
-//bfs_open_dir();
-//bfs_close_dir();
-//bfs_read_dir();
-//bfs_rewind_dir();
+diretorio bfs_open_dir(char *caminho);
+int bfs_close_dir(diretorio dir);
+int bfs_read_dir(diretorio dir, char *buffer_caminho);
+int bfs_rewind_dir(diretorio dir);
