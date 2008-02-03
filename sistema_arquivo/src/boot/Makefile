@@ -1,8 +1,8 @@
-SOURCE = boot.asm
-OBJ = boot.o
-BIN = ../../bin/boot.bin
+BOOT = boot
 
-all: $(SOURCE)
-	nasm -f elf $(SOURCE) -l boot.lst
-	ld -s -o $(BIN) $(OBJ)
+$(SRCS_BIN)$(BOOT)$(BIN): $(BOOT).o
+	ld -s -o $@ $^
+
+$(BOOT).o: $(BOOT).asm
+	nasm -f elf $^ -l $*.lst
 

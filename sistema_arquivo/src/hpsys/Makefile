@@ -1,10 +1,4 @@
-CC = gcc
-C_FLAGS = -Wall -lutil 
-INCLUDE = -I../../include/
-OBJ = ../util/util.o
-SOURCE = hpsys.c 
-BIN = ../../bin/hpsys.bin
+OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
 
-all: $(OBJ)
-	$(CC) $(C_FLAGS) $(INCLUDE) $(LIB) $(SOURCE) $(OBJ) -o $(BIN)
-
+$(SRCS_BIN)hpsys$(BIN): $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@

@@ -1,10 +1,6 @@
-CC = gcc
-C_FLAGS = -Wall -lutil 
-INCLUDE = -I../../include/
-OBJ = ../util/util.o
-SOURCE = hformat.c 
-BIN = ../../bin/hformat.bin
+OBJS = $(patsubst %.c,%.o,$(wildcard *.c)) $(UTIL)
 
-all: $(OBJ)
-	$(CC) $(C_FLAGS) $(INCLUDE) $(LIB) $(SOURCE) $(OBJ) -o $(BIN)
+$(SRCS_BIN)hformat$(BIN): $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@
 
+$(UTIL): %.o : ../../include/util.h
