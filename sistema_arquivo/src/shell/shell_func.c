@@ -11,8 +11,6 @@
 
 
 void func_dir(int argc, char *argv[]) {
-	//int i;
-	//char *caminho;
 	
 	if (argc > 1) {
 		printf("Excesso de parametros para o comando dir\n");
@@ -24,8 +22,6 @@ void func_dir(int argc, char *argv[]) {
 }
 
 void func_del(int argc, char *argv[]) {
-	//int i;
-	char *caminho;
 	
 	if (argc < 2) {
 		printf("Poucos parametros para o comando del\n");
@@ -37,35 +33,37 @@ void func_del(int argc, char *argv[]) {
 	}
 	
 	//TODO: verificar se 0(zero) é retorno OK
-	if (bfs_delete(caminho) != 0) {
+	if (bfs_delete(argv[2]) != 0) {
 		printf("Erro");
 	}
 }
 
 void func_rename(int argc, char *argv[]) {
-	//int i;
-	//char *caminho;
+	arquivo arq;
 	
 	if (argc < 2) {
-		printf("Poucos parametros para o comando del\n");
+		printf("Poucos parametros para o comando rename\n");
 		return;
 	}
 	if (argc > 3) {
-		printf("Excesso de parametros para o comando del\n");
+		printf("Excesso de parametros para o comando rename\n");
 		return;
 	}
 	
+	arq = bfs_open(argv[2], READ_WRITE);
+	
 	//TODO: verificar se 0(zero) é retorno OK
-	//TODO: olha o todo de baixo: função bfs_set_nome, acredito eu que tem que ter dois nomes de parametros, nome atual e o futuro
-	//TODO: Os parametros no .h estavam errados. Podem verificar que agora está correto.
-	/*if (bfs_set_nome(argv[2], argv[3]) != 0) {
+	if (bfs_set_nome(arq, argv[3]) != 0) {
 		printf("Erro");
-	}*/
+	}
+	
+	if (bfs_close(arq) != 0) {
+		printf("Erro");
+	}
 }
 
 void func_protect(int argc, char *argv[]) {
-	//int i;
-	//char *caminho;
+	arquivo arq;
 	
 	if (argc < 2) {
 		printf("Poucos parametros para o comando del\n");
@@ -76,16 +74,16 @@ void func_protect(int argc, char *argv[]) {
 		return;
 	}
 	
+	arq = bfs_open(argv[2], READ_WRITE);
+	
 	//TODO: verificar se 0(zero) é retorno OK
-	//TODO: Os parametros no .h estavam errados. Podem verificar que agora está correto.
-	/*if (bfs_set_prot(argv[2]) != 0) {
+	//TODO: verificar segundo parâmetro de bfs_aset_prot
+	/*if (bfs_set_prot(arq, 1) != 0) {
 		printf("Erro");
 	}*/
 }
 
 void func_copy(int argc, char *argv[]) {
-	//int i;
-	//char *caminho, *buffer;
 	arquivo arq1, arq2;
 	
 	if (argc < 2) {
@@ -101,13 +99,10 @@ void func_copy(int argc, char *argv[]) {
 	if (bfs_create(argv[3]) != 0) {
 		printf("Erro");
 	}
-	//TODO atualizar os dados das aberturas de arquivos
-	//TODO: pesquisar como se usa enum
-	//arq1 = bfs_open(argv[2], enum modo_abertura_arquivo modo);
-	//TODO: pesquisar como se usa enum
-	//arq2 = bfs_open(argv[3], enum modo_abertura_arquivo modo);
+	
+	arq1 = bfs_open(argv[2], READ);
+	arq2 = bfs_open(argv[3], WRITE);
 //TODO ver os nbytes q se deve ler / escrever	
-//TODO: <PORRAS> VERIFICA ANTES DE SUBIR PRO SVN... ESSA PORRA NAO COMPILA COM ESSE "INT NBYTES" </PORRAS>
 /*	if (bfs_read(arq1, buffer, int nbytes) != 0){
 		printf("Erro");
 	}
