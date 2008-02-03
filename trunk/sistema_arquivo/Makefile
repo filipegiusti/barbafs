@@ -1,11 +1,11 @@
 CC = gcc
 CFLAGS = -Wall -g -Iinclude
 SRC_DIR = src/
-MAKE_SUBDIRS = $(SRC_DIR)boot $(SRC_DIR)hformat $(SRC_DIR)hpsys $(SRC_DIR)hreset $(SRC_DIR)shell
-SRC_SUBDIRS = $(MAKE_SUBDIRS) $(SRC_DIR)fatorial $(SRC_DIR)filesystem $(SRC_DIR)util
 TESTES_DIR = testes/
 BIN_DIR = bin/
 TESTE_OBJS = $(patsubst %.c,%.o,$(wildcard $(TESTES_DIR)*.c)) fatorial.o filesystem.o util.o
+MAKE_SUBDIRS = $(SRC_DIR)boot $(SRC_DIR)hformat $(SRC_DIR)hpsys $(SRC_DIR)hreset $(SRC_DIR)shell
+SRC_SUBDIRS = $(wildcard $(SRC_DIR)*)
 BIN = .bin
 # Variaveis para serem usados pelas Makefiles dos srcs
 SRCS_BIN = ../../bin/
