@@ -1,7 +1,7 @@
 /**
  * @file filesystem_internal.h
  * @brief Funções auxiliares e estruturas de dados internas do sistema de arquivos.
- * @author Elvio Viscosa, Filipe Giusti, JerÃ´nimo Madruga, Leonardo Lobo, Mauro Kade.
+ * @author Elvio Vicosa, Filipe Giusti, JerÃ´nimo Madruga, Leonardo Lobo, Mauro Kade.
  * @version 1.0
  * @date    25/01/2007
  */

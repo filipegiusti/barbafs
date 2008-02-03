@@ -1,7 +1,7 @@
 /**
  * @file shell_func.c
  * @brief Funções do shell.
- * @author Elvio Viscosa, Filipe Giusti, JerÃ´nimo Madruga, Leonardo Lobo, Mauro Kade.
+ * @author Elvio Vicosa, Filipe Giusti, JerÃ´nimo Madruga, Leonardo Lobo, Mauro Kade.
  * @version 0.1 alpha
  * @date    01/02/2007
  */
