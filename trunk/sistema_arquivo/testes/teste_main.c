@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
-#include "teste_filesystem.c"
-#include "teste_hformat.c"
-#include "teste_fatorial.c"
 
-int main (void) {
+Suite *fatorial_suite();
+Suite *filesystem_suite();
+Suite *hformat_suite();
+
+int main (int argc, char *argv[]) {
 	int number_failed;
 	Suite *fatorial = fatorial_suite();
 	Suite *filesystem = filesystem_suite();

@@ -1,13 +1,8 @@
-CC = gcc
-C_FLAGS = -Wall -lutil  -g
-INCLUDE = -I../../include/
-OBJ = ../util/util.o
-SOURCE = shell.c shell_cmd.c 
-BIN = ../../bin/shell.bin
+OBJS = $(patsubst %.c,%.o,$(wildcard *.c)) $(FILESYSTEM)
 
-all: $(OBJ)
-	$(CC) $(C_FLAGS) $(INCLUDE) $(LIB) $(SOURCE) $(OBJ) -o $(BIN)
+$(SRCS_BIN)shell$(BIN): $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@
 
-run:
-	./../../bin/shell.bin
+shell_cmd.o shell_func.o: %.o : %.h
 
+$(FILESYSTEM): %.o : %_internal.h
