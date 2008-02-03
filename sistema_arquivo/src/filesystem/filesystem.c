@@ -1,7 +1,7 @@
 /**
  * @file filesystem.c
  * @brief ImplementaÁ„o do sistema de arquivos.
- * @author Elvio Viscosa, Filipe Giusti, Jer√¥nimo Madruga, Leonardo Lobo, Mauro Kade.
+ * @author Elvio Vicosa, Filipe Giusti, Jer√¥nimo Madruga, Leonardo Lobo, Mauro Kade.
  * @version 1.0
  * @date    25/01/2007
  */
