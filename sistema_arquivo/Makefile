@@ -20,7 +20,7 @@ vpath %.c $(SRC_SUBDIRS)
 all: $(MAKE_SUBDIRS)
 
 $(MAKE_SUBDIRS):
-	$(MAKE) -C $@ CFLAGS='-Wall -g -I../../include' 
+	@$(MAKE) -s -C $@ CFLAGS='-Wall -g -I../../include' 
 
 teste: $(BIN_DIR)teste$(BIN)
 	
