@@ -1,9 +1,7 @@
 /**
  * @file hformat.c
- * @brief Executável responsável pela formatação do disco a ser utilizado.
+ * @brief Formata um disco com o barbafs.
  * @author Elvio Viçosa, Filipe Giusti, Jerônimo Madruga, Mauro Kade.
- * @version 1.0
- * @date    16/01/2007
  */
 
 #include <stdio.h>
@@ -12,44 +10,42 @@
 #include <string.h>
 #include <ctype.h>
 #include "util.h"
+#include "filesystem.h"
 
-#define BOOT1 0x33 /**< Define o conteúdo do penúltimo setor de boot. */
-#define BOOT2 0xCC /**< Define o conteúdo do último setor de boot. */
-#define BOOT_PATH "boot.bin" /**< Define a localização do arquivo que contém as informações do boot. */
-#define HPSYS_PATH "hpsys.bin" /**< Define a localização do HPSYS. */
-#define SIZE_SEC 512 /**< Define o tamanho de segmento a ser utilizado no sistema de arquivos */
-#define MIN_DISK_SIZE ( 512 * SIZE_SEC ) /**< Define o tamanho mínimo em bytes que um disco a ser formatado deve ter */
-#define MAX_DISK_SIZE ( 4096 * SIZE_SEC ) /**< Define o tamanho máximo em bytes que um disco a ser formatado poderá ter */
+#define BOOT1 0x33				/**< Valor do penúltimo setor de boot. */
+#define BOOT2 0xCC				/**< Valor do último setor de boot. */
+#define BOOT_PATH "boot.bin"	/**< Caminho do arquivo que contém o boot. */
+#define HPSYS_PATH "hpsys.bin"	/**< Caminho do HPSYS. */
+#define SIZE_SEC 512			/**< Tamanho de segmento em bytes a ser utilizado no sistema de arquivos. */
+#define MIN_DISK_SIZE ( 512 * SIZE_SEC )	/**< Tamanho mínimo em bytes que um disco a ser formatado deve ter. */
+#define MAX_DISK_SIZE ( 4096 * SIZE_SEC )	/**< Tamanho máximo em bytes que um disco a ser formatado poderá ter. */
 
-struct stat info_disk; /**< Estrutura que armazena as informações de estado do arquivo que representa o disco */
-char DISK_NAME[255]; /**< Variável que irá conter o nome do disco a ser utilizado */
-FILE *disk; /**< Variável utilizada para referenciar o disco que estará sendo utilizado */
-int DISK_SIZE; /**< Tamanho que o disco terá, caso precise criar um disco */
-int FORMAT_TYPE; /**< Opção de formatação */
-enum {USING_DISK, CREATING_DISK, CREATING_SIZEDDISK}; /**<
- * define os tipos de format que poderao ser usados 
- * 1 - disco ja existe, apenas formata
- * 2 - disco nao existe, cria com valor minimo e formata
- * 3 - disco nao existe, tamanho definido pelo argv. Cria e formata
- * */
-
-int save_boot(short int tam_hpsys);
-short int save_so();
-int save_bitmap(short int tam_hpsys);
-int save_root(short int tam_hpsys);
-int format_disk();
+struct stat info_disk;	/**< Estado do arquivo que representa o disco. */
+char DISK_NAME[255];	/**< Nome do disco. */
+FILE *disk;				/**< Arquivo onde está o disco. */
+int DISK_SIZE;			/**< Tamanho que o disco terá em bytes, caso precise criar um disco. */
+int FORMAT_TYPE;		/**< Opção de formatação. */
+/**
+ * Tipos de formatação possíveis.
+ */
+enum {
+	USING_DISK,			/**< disco ja existe, apenas formata.*/
+	CREATING_DISK,		/**< disco nao existe, cria com valor minimo e formata.*/
+	CREATING_SIZEDDISK	/**< disco nao existe, tamanho definido pelo argv. Cria e formata.*/
+}; 
 
 /**
- * @fn int save_boot(int tam_hpsys)
- * @brief Função responsável por salvar os dois setores de boot no disco.
+ * @brief Salva os dois setores de boot no disco.
  * @param tam_hpsys Tamanho em setores do hpsys que foi gravado.
- * @return 1 Caso tenha sido bem sucedida a carga do boot, caso algum erro ocorra encerra o programa com uma mensagem de erro.
+ * @return 0 Caso tenha sido bem sucedida a carga do boot, caso algum erro ocorra encerra o programa com uma mensagem de erro.
+ * @todo Adicionar tratamento de erros.
  */
 int save_boot(short int tam_hpsys) {
-	FILE *boot_file; /* Variável que será utilizada para abrir o arquivo contendo o boot. */
-	char boot_content[SIZE_SEC*2]; /* Variável que sera utilizada para transferência do boot de seu arquivo original para o seu destino em disco. */
-	struct stat info_boot; /* Variável utilizada para armazenar o estado do arquivo do setor de boot. */
+	FILE *boot_file; /* Arquivo contendo o boot. */
+	char boot_content[SIZE_SEC*2]; /* Buffer da transferência do boot de seu arquivo original para o seu destino em disco. */
+	struct stat info_boot; /* Estado do arquivo do setor de boot. */
 	short int end_bitmap = (tam_hpsys+2)*SIZE_SEC;
+	char marcadores_boot;
 
 	debug("save_boot()");
 	/* verifica se é possível abrir o arquivo de boot */
@@ -69,25 +65,31 @@ int save_boot(short int tam_hpsys) {
 	fclose(boot_file);
 
 	/* Grava o código do boot e o tamanho do hpsys */
-	fseek(disk, (2*SIZE_SEC)-6-1, SEEK_SET); /* 6 é a soma de 2 short int mais 2 bytes pros marcadores e -1 pra acertar a referência */
-	fwrite(&end_bitmap, sizeof(short int), 1, disk); /* Início bitmap de setores livres *///TODO: Tratar erro e ESTA ERRADO O VALOR
-	end_bitmap -= 2*SIZE_SEC;
-	fwrite(&end_bitmap, sizeof(short int), 1, disk); //TODO: Tratar erro
-
+	fseek(disk, (2*SIZE_SEC)-2*sizeof(short int)-2*sizeof(char), SEEK_SET);
+	fwrite(&end_bitmap, sizeof(short int), 1, disk); /* Endereço de início do bitmap de setores livres */ //TODO: Tratar erro
+	fwrite(&tam_hpsys, sizeof(short int), 1, disk); /* Número de setores do SO */ //TODO: Tratar erro
+	
+	// Grava os marcadores do final do boot
+	marcadores_boot = BOOT1;
+	fwrite(&marcadores_boot, sizeof(char), 1, disk); //TODO: Tratar erro
+	marcadores_boot = BOOT2;
+	fwrite(&marcadores_boot, sizeof(char), 1, disk); //TODO: Tratar erro
+	
 	debug("BOOT salvo");
-	return 1;
+	return 0;
 }
 
 /**
- * @fn int save_so()
- * @brief Função responsável por salvar o sistema operacional no disco.
- * @return Retorna o tamanho do SO em setores gravado no disco, caso algum erro ocorra encerra o programa com uma mensagem de erro.
+ * @brief Salva o sistema operacional no disco.
+ * @return Retorna o tamanho do SO gravado no disco em setores, caso algum erro ocorra encerra o programa com uma mensagem de erro.
+ * 
+ * @todo Adicionar alguns tratamentos de erro.
  */
 short int save_so() {
-	FILE *hpsys; /* Variável que será utilizada para a abertura do arquivo do HPSYS. */
-	char *buffer; /* Variável que será utilizada para transferência do arquivo do HPSYS para o seu destino no disco */
-	char info_hpsys_str[100]; /* Variável que armazena a mensagem de debug que contém o tamanho do HPSYS */
-	struct stat info_hpsys; /* Variável utilizada para armazenar o estado do arquivo do HPSYS. */
+	FILE *hpsys; /* Arquivo do HPSYS. */
+	char *buffer; /* Buffer do arquivo do HPSYS para o seu destino no disco */
+	char info_hpsys_str[100]; /* Mensagem de debug que contém o tamanho do HPSYS */
+	struct stat info_hpsys; /* Estado do arquivo do HPSYS. */
 	int tam_so_gravado; /* Em bytes */
 	
 	/* abertura do hpsys */
@@ -117,15 +119,16 @@ short int save_so() {
 }
 
 /**
- * @fn int save_bitmap()
- * @brief Função responsável por salvar o mapa de bits no disco.
+ * @brief Salva o mapa de bits no disco.
  * @param tam_hpsys Tamanho em setores do hpsys que foi gravado.
- * @return 1 Caso tenha sido bem sucedido a carga do mapa de bits para o disco.
+ * @return 0 Caso tenha sido bem sucedido a carga do mapa de bits para o disco.
  */
 int save_bitmap(short int tam_hpsys) {
 	int i, j = 0;
 	char bitmap[SIZE_SEC];
-	int setores_ocupados_inicialmente = 2 + tam_hpsys + 1 + 2; /* Boot + hpsys + bitmap + descritores do arquivos */
+	int setores_ocupados_inicialmente = 2 + tam_hpsys + 1 + 2 + 1; /* Boot + hpsys + bitmap + descritores do arquivos + mapa de paginas do root*/
+	debug("Salvando bitmap");
+	
 	for(i = 0 ; i < setores_ocupados_inicialmente ; i++) {
 		if ( !(i%8) ) {
 			j = 1;
@@ -134,25 +137,47 @@ int save_bitmap(short int tam_hpsys) {
 		j <<= 1;
 	}
 	//printf("hpsys: %d\nbitmap: %s\n", tam_hpsys, bitmap);
-	fseek(disk, (setores_ocupados_inicialmente)*SIZE_SEC, SEEK_SET);
+	fseek(disk, (2+tam_hpsys)*SIZE_SEC, SEEK_SET);/* boot + hpsys */
 	fwrite(bitmap, sizeof(char), SIZE_SEC, disk);
-	return 1;
+	debug("bitmap salvo");
+	return 0;
 }
 
 /**
- * @fn int save_root()
- * @brief Função responsável por salvar o diretório raiz no disco.
+ * @brief Salvar o diretório raiz no disco.
  * @param tam_hpsys Tamanho em setores do hpsys que foi gravado.
- * @return 1 Caso tenha sido bem sucedido a criação da diretório raiz.
+ * @return 0 Caso tenha sido bem sucedido a criação da diretório raiz.
  */
 int save_root(short int tam_hpsys) {
-	return 1;
+	short int end_descritores = (2+tam_hpsys+1)*SIZE_SEC;/* boot + tam_hpsys + bitmap de blocos livres */
+	char nome_root[MAX_SIZE_NOME+1] = "";
+	char tipo_root = DIR;
+	char prot = 0;
+	short int end_mapa_paginas = end_descritores+(2*SIZE_SEC); 
+	
+	char num_arq_diretorio = 0;
+	debug("Salvando root");
+	
+	// Salva descritor do diretório root
+	fseek(disk, end_descritores, SEEK_SET);
+	fwrite(nome_root, sizeof(char), MAX_SIZE_NOME+1, disk);
+	fwrite(&tipo_root, sizeof(char), 1, disk);
+	fwrite(&prot, sizeof(char), 1, disk);
+	fwrite(&end_mapa_paginas, sizeof(short int), 1, disk);
+	
+	// Salva mapa de páginas do root
+	fseek(disk, end_mapa_paginas, SEEK_SET);
+	fwrite(&num_arq_diretorio, sizeof(char), 1, disk);
+	fwrite(&end_descritores, sizeof(short int), 1, disk); // Referencia self
+	fwrite(&end_descritores, sizeof(short int), 1, disk); // Referencia ao pai
+	
+	debug("root salvo");
+	return 0;
 }
 
 /**
- * @fn int format_disk()
- * @brief Função que formata o disco a ser utilizado.
- * @return 1 Caso a formatação tenha sido bem sucedida.
+ * @brief Formata o disco a ser utilizado.
+ * @return 0 Caso a formatação tenha sido bem sucedida.
  */
 int format_disk() {
 	int i; /* Variável utilizada como contador para percorrer os setores do disco */
@@ -177,72 +202,74 @@ int format_disk() {
 		fwrite(&nulo, sizeof(char), 1, disk);
 	}
 
-	debug("Disco Formatado");
+	debug("Disco Zerado");
 	tam_so = save_so();
 	sprintf(msg, "Tamanho do so gravado = %d setores", tam_so);
 	debug(msg);
 	tam_so *= 1.5;
+	sprintf(msg, "Tamanho deixado para o so = %d setores", tam_so);
+	debug(msg);
 	save_boot(tam_so);
 	save_bitmap(tam_so);
-	//save_root();
-	return 1;
+	save_root(tam_so);
+	return 0;
 }
 
 /**
- * @fn int file_exist(char *file_path)
  * @brief Verifica se um arquivo existe.
- * @param file_path Path do arquivo a ser testado
- * @return 1 Arquivo existe
- * @return 0 Arquivo não existe
+ * @param file_path Path do arquivo a ser verificado.
+ * @return 1 Arquivo existe.
+ * @return 0 Arquivo não existe.
  */
 int file_exist(char *file_path) {
 	FILE *fp;
-	if ( (fp = fopen(file_path, "r")) != NULL )
+	if ( (fp = fopen(file_path, "r")) != NULL ) {
 		return 1;
+	}
 
 	return 0;
 }
 
 
 /**
- * @fn int file_exist(char *file_path)
- * @brief Imprime o texto de help
+ * @brief Imprime o texto de help e aborta a execução.
  * 
- * Pode-se usar
- * ./hformat disco (disco nao existe)
- * ./hformat disco (disco ja existe)
- * ./hformat -s 5000 disco (disco nao existe)
- *
- * */
+ * Imprime o seguinte texto:
+ * 
+ * Uso: hformat [OPÇÕES] DISCO\n
+ * Formata um disco com o sistema de arquivos bfs, e se o disco não existir, cria um com tamanho mínimo.
+ * 
+ * 		-s NUM	 Cria disco com NUM número de setores.\n
+ * 		-h		 Mostra esta ajuda.
+ */
 void hformat_help() {
-	printf("\nHFORMAT - Ajuda\n\n");
-	printf("./hformat disco -- se disco nao existe, cria disco com tamanho minimo e formata\n");
-	printf("./hformat disco -- se existe, formata disco\n");
-	printf("./hformat -s tam disco -- cria disco com tamanho tam(em Kb) e formata. \n\n"); //TODO: alterar pra usuário entrar com o numero de setores
-	printf("./hformat -h|--help -- Mostra esta ajuda. \n\n");
+	printf("Uso: hformat [OPÇÕES] DISCO\n");
+	printf("Formata um disco com o sistema de arquivos bfs, e se o disco não existir,\n");
+	printf("cria um com tamanho mínimo.\n\n");
+	printf("\t -s NUM \t Cria disco com NUM número de setores.\n");
+	printf("\t -h \t\t Mostra esta ajuda.\n\n");
 	exit(EXIT_FAILURE);
 }
 
 /**
- * @fn void filter_argv(int argc, char **argv)
- * @brief TODO: Coloca na conta do Elvio a documentação
- * @param argc TODO
- * @param argv TODO
+ * @brief Filtra os argumentos passados.
+ * 
+ * Armazena os argumentos passados nas variáveis globais e se houver algum erro aborta o programa e imprime uma mensagem de como utilizá-lo.
+ * 
+ * @param argc Número de argumentos
+ * @param argv Argumentos 
  */
 void filter_argv(int argc, char **argv) {
 	struct stat disco_info;
-	float size_from_argv;
+	int size_from_argv;
 	char str_erro[100];
 
-	if (argc != 2 && argc != 4) {
-		hformat_help();
-	} 
-
 	if (argc == 2) {
-		if ( !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
+		// Chamou o help
+		if ( !strcmp(argv[1], "-h")) {
 			hformat_help();
-		} 
-		// disco existe
+		}
+		// Disco existe
 		else if (file_exist(argv[1])) {
 			stat(argv[1], &disco_info);
 			if (disco_info.st_size >= MIN_DISK_SIZE && disco_info.st_size <= MAX_DISK_SIZE) {
@@ -250,44 +277,46 @@ void filter_argv(int argc, char **argv) {
 				DISK_SIZE = disco_info.st_size;
 				strcpy(DISK_NAME, argv[1]);
 			} else {
-				sprintf(str_erro, "Tamanho especificado( %f Kb ) invalido", (float)disco_info.st_size);
+				sprintf(str_erro, "O número ( %d ) de setores é inválido.", (int)disco_info.st_size);
 				print_error("0x0007", str_erro, 1);
 			}
 		}
 		// disco nao existe && sem determinar tamanho
 		else {
-			if (strlen(argv[1]) > 7) { // TODO: q q é isso????
+			if (strlen(argv[1]) > 7) { /** @todo O que que é isso????*/
 				FORMAT_TYPE = CREATING_DISK;
 				DISK_SIZE = MAX_DISK_SIZE; 
 				strcpy(DISK_NAME, argv[1]);
 			} else {
-				print_error("0x0009", "Nome de arquivo invalido", 1);
+				print_error("0x0009", "Nome de arquivo inválido.", 1);
 			}
 		}
 	}
 	else if (argc == 4) {
-		size_from_argv = atof(argv[2]);
-		size_from_argv /= 1024; // TODO: numero do nada??? tem q documentar quando tem valores fixos voando por ai
+		size_from_argv = atoi(argv[2])*SIZE_SEC;
 		if ( !strcmp(argv[1], "-s") ) {
-			if (size_from_argv >= MIN_DISK_SIZE/1024 && size_from_argv <= MAX_DISK_SIZE/1024) {
+			if (size_from_argv >= MIN_DISK_SIZE && size_from_argv <= MAX_DISK_SIZE) {
 				FORMAT_TYPE = CREATING_SIZEDDISK;
 				DISK_SIZE = size_from_argv; 
 				strcpy(DISK_NAME, argv[3]);
 			} else {
-				sprintf(str_erro, "Tamanho especificado( %f Kb ) invalido", size_from_argv);
+				sprintf(str_erro, "O número ( %d ) de setores é inválido.", size_from_argv);
 				print_error("0x0007", str_erro, 1);
 			}
 		} else {
 			print_error("0x0007", "Opcao desconhecida", 1);
 		} 
 	}
+	// Argumentos estão errados.
+	else {
+		hformat_help();
+	}
 }
 
 /**
- * @fn int main(int argc, char *argv[])
- * @brief Função principal do hformat.c, responsável por chamar as subrotinas e verificar se os parâmetros foram passados corretamente.
- * @param argc Indica o número de parâmetros passados pela linha de comando.
- * @param argv String que representa os parâmetros passados na linha de comando.
+ * @brief Chama as subrotinas e verifica se os parâmetros foram passados corretamente.
+ * @param argc Número de parâmetros passados pela linha de comando.
+ * @param argv Strings passadas pela linha de comando.
  * @return 0 Se a operação de formatação do disco foi bem sucedida.
  */
 int main(int argc, char *argv[]) {
