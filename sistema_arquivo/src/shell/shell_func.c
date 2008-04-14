@@ -1,6 +1,6 @@
 /**
  * @file shell_func.c
- * @brief Funções do shell.
+ * @brief Funï¿½ï¿½es do shell.
  * @author Elvio Vicosa, Filipe Giusti, JerÃ´nimo Madruga, Leonardo Lobo, Mauro Kade.
  * @version 0.1 alpha
  * @date    01/02/2007
@@ -32,7 +32,7 @@ void func_del(int argc, char *argv[]) {
 		return;
 	}
 	
-	//TODO: verificar se 0(zero) é retorno OK
+	//TODO: verificar se 0(zero) ï¿½ retorno OK
 	if (bfs_delete(argv[2]) != 0) {
 		printf("Erro");
 	}
@@ -52,7 +52,7 @@ void func_rename(int argc, char *argv[]) {
 	
 	arq = bfs_open(argv[2], READ_WRITE);
 	
-	//TODO: verificar se 0(zero) é retorno OK
+	//TODO: verificar se 0(zero) ï¿½ retorno OK
 	if (bfs_set_nome(arq, argv[3]) != 0) {
 		printf("Erro");
 	}
@@ -76,8 +76,8 @@ void func_protect(int argc, char *argv[]) {
 	
 	arq = bfs_open(argv[2], READ_WRITE);
 	
-	//TODO: verificar se 0(zero) é retorno OK
-	//TODO: verificar segundo parâmetro de bfs_aset_prot
+	//TODO: verificar se 0(zero) ï¿½ retorno OK
+	//TODO: verificar segundo parï¿½metro de bfs_aset_prot
 	if (bfs_set_prot(arq, '1') != 0) {
 		printf("Erro");
 	}
@@ -95,7 +95,7 @@ void func_copy(int argc, char *argv[]) {
 		return;
 	}
 	
-	//TODO: verificar se 0(zero) é retorno OK
+	//TODO: verificar se 0(zero) ï¿½ retorno OK
 	if (bfs_create(argv[3]) != 0) {
 		printf("Erro");
 	}
@@ -163,8 +163,8 @@ void func_link(int argc, char *argv[]) {
 }
 
 
-//TODO: exibe uma descrição dos comandos do shell;
-//TODO: se for passado apenas [help], sem nenhum outro parâmetro, lista todos os comandos
+//TODO: exibe uma descriï¿½ï¿½o dos comandos do shell;
+//TODO: se for passado apenas [help], sem nenhum outro parï¿½metro, lista todos os comandos
 //TODO: se for passado [help] + comando, exibe a sintaxe correta do comando especificado
 void func_help(int argc, char *argv[]) {
 
@@ -277,7 +277,7 @@ void func_help(int argc, char *argv[]) {
                 printf("[shutdown] \n");
      }
      
-     exit(EXIT_SUCESS);
+     exit(0);
 }
 
 
