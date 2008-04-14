@@ -2,11 +2,9 @@
  * @file filesystem.h
  * @brief Chamadas do sistema de arquivos.
  * @author Elvio Viscosa, Filipe Giusti, Jerônimo Madruga, Leonardo Lobo, Mauro Kade.
- * @version 1.0
- * @date    25/01/2007
  */
 
-#define MAX_SIZE_NOME 11 /**< Tamanho m�ximo pra nomes de arquivo ou diret�rio. */
+#define MAX_SIZE_NOME 11 /**< Tamanho máximo pra nomes de arquivo ou diretório. */
 
 /**
  * @enum modo_abertura_arquivo
@@ -33,12 +31,12 @@ typedef unsigned int diretorio;
  * @brief Indicador do tipo de arquivo.
  */
 enum tipo_arquivo {
-	bin, /**< Arquivo do tipo binário. */
-	txt, /**< Arquivo do tipo texto. */
-	exe, /**< Arquivo do tipo executável do Host. */
-	hpx, /**< Arquivo do tipo executável da máquina virtual */
-	obj, /**< Arquivo do tipo objeto. */
-	dir /**< Arquivo representa um diretório. */
+	BIN, /**< Arquivo do tipo binário. */
+	TXT, /**< Arquivo do tipo texto. */
+	EXE, /**< Arquivo do tipo executável do Host. */
+	HPX, /**< Arquivo do tipo executável da máquina virtual */
+	OBJ, /**< Arquivo do tipo objeto. */
+	DIR /**< Arquivo representa um diretório. */
 };
 
 int bfs_create(char *caminho);
