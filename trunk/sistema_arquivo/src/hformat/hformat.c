@@ -12,19 +12,19 @@
 #include "util.h"
 #include "filesystem.h"
 
-#define BOOT1 0x33				/**< Valor do penúltimo setor de boot. */
-#define BOOT2 0xCC				/**< Valor do último setor de boot. */
-#define BOOT_PATH "boot.bin"	/**< Caminho do arquivo que contém o boot. */
-#define HPSYS_PATH "hpsys.bin"	/**< Caminho do HPSYS. */
-#define SIZE_SEC 512			/**< Tamanho de segmento em bytes a ser utilizado no sistema de arquivos. */
+#define BOOT1 0x33							/**< Valor do penúltimo setor de boot. */
+#define BOOT2 0xCC							/**< Valor do último setor de boot. */
+#define BOOT_PATH "boot.bin"				/**< Caminho do arquivo que contém o boot. */
+#define HPSYS_PATH "hpsys.bin"				/**< Caminho do HPSYS. */
+#define SIZE_SEC 512						/**< Tamanho de segmento em bytes a ser utilizado no sistema de arquivos. */
 #define MIN_DISK_SIZE ( 512 * SIZE_SEC )	/**< Tamanho mínimo em bytes que um disco a ser formatado deve ter. */
 #define MAX_DISK_SIZE ( 4096 * SIZE_SEC )	/**< Tamanho máximo em bytes que um disco a ser formatado poderá ter. */
 
-struct stat info_disk;	/**< Estado do arquivo que representa o disco. */
 char DISK_NAME[255];	/**< Nome do disco. */
 FILE *disk;				/**< Arquivo onde está o disco. */
 int DISK_SIZE;			/**< Tamanho que o disco terá em bytes, caso precise criar um disco. */
 int FORMAT_TYPE;		/**< Opção de formatação. */
+
 /**
  * Tipos de formatação possíveis.
  */
@@ -41,9 +41,9 @@ enum {
  * @todo Adicionar tratamento de erros.
  */
 int save_boot(short int tam_hpsys) {
-	FILE *boot_file; /* Arquivo contendo o boot. */
-	char boot_content[SIZE_SEC*2]; /* Buffer da transferência do boot de seu arquivo original para o seu destino em disco. */
-	struct stat info_boot; /* Estado do arquivo do setor de boot. */
+	FILE *boot_file;											/* Arquivo contendo o boot. */
+	char boot_content[SIZE_SEC*2];								/* Buffer da transferência do boot de seu arquivo original para o seu destino em disco. */
+	struct stat info_boot;										/* Estado do arquivo do setor de boot. */
 	short int end_bitmap = (tam_hpsys+2)*SIZE_SEC;
 	char marcadores_boot;
 
@@ -59,21 +59,21 @@ int save_boot(short int tam_hpsys) {
 	/* verifica se o tamanho do boot a ser caregado corresponde ao tamanho de dois setores */
 	/*if (info_boot.st_size > 2*SIZE_SEC) {
 		print_error("0x005", "Tamanho do boot maior que 2 setores", 1);
-	}*/ // TODO: Comentando até achar uma solução melhor pro boot.bin
-	fread(boot_content, sizeof(char), SIZE_SEC*2, boot_file); //TODO: Tratar erro
-	fwrite(boot_content, sizeof(char), SIZE_SEC*2, disk); //TODO: Tratar erro
+	}*/ 														// TODO: Comentando até achar uma solução melhor pro boot.bin
+	fread(boot_content, sizeof(char), SIZE_SEC*2, boot_file);	//TODO: Tratar erro
+	fwrite(boot_content, sizeof(char), SIZE_SEC*2, disk);		//TODO: Tratar erro
 	fclose(boot_file);
 
 	/* Grava o código do boot e o tamanho do hpsys */
 	fseek(disk, (2*SIZE_SEC)-2*sizeof(short int)-2*sizeof(char), SEEK_SET);
-	fwrite(&end_bitmap, sizeof(short int), 1, disk); /* Endereço de início do bitmap de setores livres */ //TODO: Tratar erro
-	fwrite(&tam_hpsys, sizeof(short int), 1, disk); /* Número de setores do SO */ //TODO: Tratar erro
+	fwrite(&end_bitmap, sizeof(short int), 1, disk);			/* Endereço de início do bitmap de setores livres */ //TODO: Tratar erro
+	fwrite(&tam_hpsys, sizeof(short int), 1, disk);				/* Número de setores do SO */ //TODO: Tratar erro
 	
 	// Grava os marcadores do final do boot
 	marcadores_boot = BOOT1;
-	fwrite(&marcadores_boot, sizeof(char), 1, disk); //TODO: Tratar erro
+	fwrite(&marcadores_boot, sizeof(char), 1, disk);			//TODO: Tratar erro
 	marcadores_boot = BOOT2;
-	fwrite(&marcadores_boot, sizeof(char), 1, disk); //TODO: Tratar erro
+	fwrite(&marcadores_boot, sizeof(char), 1, disk);			//TODO: Tratar erro
 	
 	debug("BOOT salvo");
 	return 0;
@@ -86,16 +86,16 @@ int save_boot(short int tam_hpsys) {
  * @todo Adicionar alguns tratamentos de erro.
  */
 short int save_so() {
-	FILE *hpsys; /* Arquivo do HPSYS. */
-	char *buffer; /* Buffer do arquivo do HPSYS para o seu destino no disco */
-	char info_hpsys_str[100]; /* Mensagem de debug que contém o tamanho do HPSYS */
-	struct stat info_hpsys; /* Estado do arquivo do HPSYS. */
-	int tam_so_gravado; /* Em bytes */
+	FILE *hpsys;				/* Arquivo do HPSYS. */
+	char *buffer;				/* Buffer do arquivo do HPSYS para o seu destino no disco */
+	char info_hpsys_str[100];	/* Mensagem de debug que contém o tamanho do HPSYS */
+	struct stat info_hpsys;		/* Estado do arquivo do HPSYS. */
+	int tam_so_gravado;			/* Em bytes */
 	
 	/* abertura do hpsys */
 	hpsys = fopen(HPSYS_PATH, "rb");
 	if (!hpsys) {
-		char error_msg[100]; /* Mensagem de erro */
+		char error_msg[100];											/* Mensagem de erro */
 		sprintf(error_msg, "Não foi possivel abrir o arquivo %s", HPSYS_PATH);
 		print_error("0x668", error_msg, 1);
 	}
@@ -110,8 +110,8 @@ short int save_so() {
 	fseek(disk, 2*SIZE_SEC, SEEK_SET);
 
 	/* copiando hpsys para o 3º setor */
-	buffer = (char *) malloc( info_hpsys.st_size ); // TODO: Tratar erro
-	fread(buffer, sizeof(char), info_hpsys.st_size, hpsys); // TODO: Tratar erro
+	buffer = (char *) malloc( info_hpsys.st_size );						// TODO: Tratar erro
+	fread(buffer, sizeof(char), info_hpsys.st_size, hpsys);				// TODO: Tratar erro
 	tam_so_gravado = fwrite(buffer, sizeof(char), info_hpsys.st_size, disk); // TODO: Tratar erro
 	debug("HPSYS salvo no disco");
 	fclose(hpsys);
@@ -137,7 +137,7 @@ int save_bitmap(short int tam_hpsys) {
 		j <<= 1;
 	}
 	//printf("hpsys: %d\nbitmap: %s\n", tam_hpsys, bitmap);
-	fseek(disk, (2+tam_hpsys)*SIZE_SEC, SEEK_SET);/* boot + hpsys */
+	fseek(disk, (2+tam_hpsys)*SIZE_SEC, SEEK_SET);			/* boot + hpsys */
 	fwrite(bitmap, sizeof(char), SIZE_SEC, disk);
 	debug("bitmap salvo");
 	return 0;
@@ -149,7 +149,7 @@ int save_bitmap(short int tam_hpsys) {
  * @return 0 Caso tenha sido bem sucedido a criação da diretório raiz.
  */
 int save_root(short int tam_hpsys) {
-	short int end_descritores = (2+tam_hpsys+1)*SIZE_SEC;/* boot + tam_hpsys + bitmap de blocos livres */
+	short int end_descritores = (2+tam_hpsys+1)*SIZE_SEC;	/* boot + tam_hpsys + bitmap de blocos livres */
 	char nome_root[MAX_SIZE_NOME+1] = "";
 	char tipo_root = DIR;
 	char prot = 0;
@@ -168,8 +168,8 @@ int save_root(short int tam_hpsys) {
 	// Salva mapa de páginas do root
 	fseek(disk, end_mapa_paginas, SEEK_SET);
 	fwrite(&num_arq_diretorio, sizeof(char), 1, disk);
-	fwrite(&end_descritores, sizeof(short int), 1, disk); // Referencia self
-	fwrite(&end_descritores, sizeof(short int), 1, disk); // Referencia ao pai
+	fwrite(&end_descritores, sizeof(short int), 1, disk);	// Referencia self
+	fwrite(&end_descritores, sizeof(short int), 1, disk);	// Referencia ao pai
 	
 	debug("root salvo");
 	return 0;
@@ -180,9 +180,9 @@ int save_root(short int tam_hpsys) {
  * @return 0 Caso a formatação tenha sido bem sucedida.
  */
 int format_disk() {
-	int i; /* Variável utilizada como contador para percorrer os setores do disco */
-	char nulo=0; /* Variável utilizada como conteúdo para os setores do disco a serem preenchidos */
-	short int tam_so; /* Tamanho em setores */
+	int i;				/* Variável utilizada como contador para percorrer os setores do disco */
+	char nulo=0;		/* Variável utilizada como conteúdo para os setores do disco a serem preenchidos */
+	short int tam_so;	/* Tamanho em setores */
 	char msg[100];
 
 	if (FORMAT_TYPE == CREATING_DISK)
@@ -201,14 +201,12 @@ int format_disk() {
 	for (i=0; i < DISK_SIZE; i++) {
 		fwrite(&nulo, sizeof(char), 1, disk);
 	}
-
 	debug("Disco Zerado");
+	
 	tam_so = save_so();
 	sprintf(msg, "Tamanho do so gravado = %d setores", tam_so);
 	debug(msg);
 	tam_so *= 1.5;
-	sprintf(msg, "Tamanho deixado para o so = %d setores", tam_so);
-	debug(msg);
 	save_boot(tam_so);
 	save_bitmap(tam_so);
 	save_root(tam_so);
@@ -283,7 +281,7 @@ void filter_argv(int argc, char **argv) {
 		}
 		// disco nao existe && sem determinar tamanho
 		else {
-			if (strlen(argv[1]) > 7) { /** @todo O que que é isso????*/
+			if (strlen(argv[1]) > 7) {							/** @todo O que que é isso????*/
 				FORMAT_TYPE = CREATING_DISK;
 				DISK_SIZE = MAX_DISK_SIZE; 
 				strcpy(DISK_NAME, argv[1]);
@@ -320,9 +318,6 @@ void filter_argv(int argc, char **argv) {
  * @return 0 Se a operação de formatação do disco foi bem sucedida.
  */
 int main(int argc, char *argv[]) {
-	debug("Iniciando HFORMAT");
-
-	/* verifica o que foi passado para linha de comando */
 	filter_argv(argc, argv);
 
 	format_disk();
