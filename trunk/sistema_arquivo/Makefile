@@ -28,6 +28,7 @@ teste: $(BIN_DIR)teste$(BIN)
 $(BIN_DIR)teste$(BIN): $(TESTE_OBJS)
 	make
 	$(CC) $(CFLAGS) $^ -lcheck -o $@
+	@rm *.o
 
 debug:
 	$(CC) $(CFLAGS) -DDEBUG -c $(SRC_DIR)util/util.c -o $(SRC_DIR)util/util.o

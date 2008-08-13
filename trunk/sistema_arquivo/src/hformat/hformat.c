@@ -65,43 +65,6 @@ int save_boot(short int tam_hpsys) {
 	
 	debug("BOOT salvo");
 	return 0;
-	
-// 	FILE *boot_file;											/* Arquivo contendo o boot. */
-// 	char boot_content[SIZE_SEC*TAM_BOOT];						/* Buffer da transferência do boot de seu arquivo original para o seu destino em disco. */
-// 	struct stat info_boot;										/* Estado do arquivo do setor de boot. */
-// 	short int end_bitmap = (tam_hpsys+TAM_BOOT)*SIZE_SEC;
-// 	char marcadores_boot;
-// 
-// 	debug("save_boot()");
-// 	/* verifica se é possível abrir o arquivo de boot */
-// 	if ( (boot_file = fopen(BOOT_PATH, "r")) == NULL ) {
-// 		char error_msg[100]; /* Irá conter a mensagem de erro */
-// 		sprintf(error_msg, "Não foi possivel abrir o arquivo %s", BOOT_PATH);
-// 		print_error("0x666", error_msg, 1);
-// 	}
-// 	fseek(disk, 0, SEEK_SET);
-// 	stat(BOOT_PATH, &info_boot);
-// 	/* verifica se o tamanho do boot a ser caregado corresponde ao tamanho de dois setores */
-// 	/*if (info_boot.st_size > 2*SIZE_SEC) {
-// 		print_error("0x005", "Tamanho do boot maior que 2 setores", 1);
-// 	}*/ 														// TODO: Comentando até achar uma solução melhor pro boot.bin
-// 	fread(boot_content, sizeof(char), SIZE_SEC*TAM_BOOT, boot_file);	//TODO: Tratar erro
-// 	fwrite(boot_content, sizeof(char), SIZE_SEC*TAM_BOOT, disk);		//TODO: Tratar erro
-// 	fclose(boot_file);
-// 
-// 	/* Grava o código do boot e o tamanho do hpsys */
-// 	fseek(disk, (2*SIZE_SEC)-2*sizeof(short int)-2*sizeof(char), SEEK_SET);
-// 	fwrite(&end_bitmap, sizeof(short int), 1, disk);			/* Endereço de início do bitmap de setores livres */ //TODO: Tratar erro
-// 	fwrite(&tam_hpsys, sizeof(short int), 1, disk);				/* Número de setores do SO */ //TODO: Tratar erro
-// 	
-// 	// Grava os marcadores do final do boot
-// 	marcadores_boot = BOOT1;
-// 	fwrite(&marcadores_boot, sizeof(char), 1, disk);			//TODO: Tratar erro
-// 	marcadores_boot = BOOT2;
-// 	fwrite(&marcadores_boot, sizeof(char), 1, disk);			//TODO: Tratar erro
-// 	
-// 	debug("BOOT salvo");
-// 	return 0;
 }
 
 /**
@@ -392,7 +355,7 @@ void low_level_size_check() {
 int main(int argc, char *argv[]) {
 	filter_argv(argc, argv);
 
-	//low_level_size_check();
+	low_level_size_check();
 
 	format_disk();
 	fclose(disk);
