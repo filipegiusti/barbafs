@@ -6,6 +6,9 @@
 
 #include "filesystem.h"
 
+#define TAM_ENDERECO_DISCO 2
+#define TAM_DESCRITOR_ARQUIVO 16
+
 /**
  * Uma posição dentro do disco o qual começa do setor 0.
  */
