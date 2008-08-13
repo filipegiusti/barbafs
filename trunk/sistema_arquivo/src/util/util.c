@@ -14,7 +14,7 @@
  * se should_exit == 1 mostra erro e termina programa (erro fatal)
  */
 void print_error(char *erro, char *descricao, int should_exit) {
-	printf("HFORMAT 0.4-160108 alpha\n");	
+	printf("HFORMAT 0.5-120808 alpha\n");	
 	printf("------------------------\n");
 	printf("ERRO.....: %s\n", erro);
 	printf("DESCRICAO: %s\n\n", descricao);
