@@ -33,7 +33,7 @@ struct mapa_paginas_arquivo {
  * @brief Mapa de arquivos de um diretório.
  */
 struct mapa_paginas_diretorio {
-	char quantidade[2]; /**< Indica  a quantidade de arquivos existentes em arquivos[] */
+	unsigned int quantidade; /**< Indica a quantidade de arquivos existentes em arquivos[] */
 	endereco_disco self; /**< Aponta para o endereço atual do arquivo em questão. */
 	endereco_disco pai; /**< Aponta para o endereço do pai do arquivo em questão. */
 	endereco_disco arquivos[253]; /**< Endereço dos arquivos contidos no diretório. */

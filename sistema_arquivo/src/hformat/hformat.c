@@ -10,7 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "util.h"
-#include "filesystem.h"
+#include "../filesystem/filesystem_internal.h"
 
 #define BOOT1 0x33							/**< Valor do penúltimo setor de boot. */
 #define BOOT2 0xCC							/**< Valor do último setor de boot. */
@@ -152,27 +152,29 @@ int save_bitmap(short int tam_hpsys) {
  * @return 0 Caso tenha sido bem sucedido a criação da diretório raiz.
  */
 int save_root(short int tam_hpsys) {
-	short int end_descritores = (2+tam_hpsys+1)*SIZE_SEC;	/* boot + tam_hpsys + bitmap de blocos livres */
-	char nome_root[MAX_SIZE_NOME+1] = "";
-	char tipo_root = DIR;
-	char prot = 0;
-	short int end_mapa_paginas = end_descritores+(2*SIZE_SEC); 
+	endereco_disco end_descritores = (2+tam_hpsys+1)*SIZE_SEC;	/* boot + tam_hpsys + bitmap de blocos livres */
+	struct descritor_arquivo desc_raiz;
+	strcpy(desc_raiz.nome, "raiz");
+	desc_raiz.tipo = DIR;
+	desc_raiz.protecao = 0;
+	desc_raiz.mapa_pag = end_descritores+(2*SIZE_SEC);
 	
-	char num_arq_diretorio = 0;
+	struct mapa_paginas_diretorio raiz;
+	raiz.quantidade = 0;
+	raiz.self = end_descritores;
+	raiz.pai = end_descritores; 
+	
 	debug("Salvando root");
 	
 	// Salva descritor do diretório root
 	fseek(disk, end_descritores, SEEK_SET);
-	fwrite(nome_root, sizeof(char), MAX_SIZE_NOME+1, disk);
-	fwrite(&tipo_root, sizeof(char), 1, disk);
-	fwrite(&prot, sizeof(char), 1, disk);
-	fwrite(&end_mapa_paginas, sizeof(short int), 1, disk);
+	fwrite(&desc_raiz, sizeof(struct descritor_arquivo), 1, disk);
 	
 	// Salva mapa de páginas do root
-	fseek(disk, end_mapa_paginas, SEEK_SET);
-	fwrite(&num_arq_diretorio, sizeof(char), 1, disk);
-	fwrite(&end_descritores, sizeof(short int), 1, disk);	// Referencia self
-	fwrite(&end_descritores, sizeof(short int), 1, disk);	// Referencia ao pai
+	fseek(disk, desc_raiz.mapa_pag, SEEK_SET);
+	fwrite(&raiz, sizeof(struct mapa_paginas_diretorio), 1, disk);
+	
+	//TODO: AJUSTAR SIZEOF'S
 	
 	debug("root salvo");
 	return 0;
