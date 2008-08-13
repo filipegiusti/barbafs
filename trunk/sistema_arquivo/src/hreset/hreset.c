@@ -14,7 +14,7 @@
 int main(int argc, char *argv[]) {
 	pid_t pid;
 	FILE *fp;
-	char validar[1024];
+	unsigned char validar[1024];
 
 	if (argc == 1){
 		printf("Nenhum argumento passado.\n");
@@ -39,10 +39,10 @@ int main(int argc, char *argv[]) {
 		printf("Erro na leitura do disco.");
 		return 1;
 	}
-	
+
 	if ( ((validar[1022]) != 0x33) || (validar[1023] != 0xCC) ){
-		//printf("Boot inválido\n");
-		//return 1;
+		printf("Boot inválido\n");
+		return 1;
 	}
 	pid = fork();
 	/* Inicio da Execução do código do filho */
