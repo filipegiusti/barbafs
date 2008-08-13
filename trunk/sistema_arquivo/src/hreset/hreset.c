@@ -10,6 +10,22 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+/**
+ * @brief Imprime o texto de help e aborta a execução.
+ * 
+ * Imprime o seguinte texto:
+ * Uso: hreset DISCO\n
+ * Inicializa um disco anteriormente formatado, se o disco não existir é informado a não existência do mesmo.
+ * 
+ */
+void hreset_help() {
+	printf("Uso: hreset DISCO\n");
+	printf("Inicializa um disco anteriormente formatado, se o disco não existir é informado a não existência do mesmo.\n\n");
+	exit(EXIT_FAILURE);
+}
+
 
 int main(int argc, char *argv[]) {
 	pid_t pid;
@@ -17,26 +33,22 @@ int main(int argc, char *argv[]) {
 	unsigned char validar[1024];
 
 	if (argc == 1){
-		printf("Nenhum argumento passado.\n");
-		printf("Favor digitar o nome do disco a ser inicializado\n");
+		hreset_help();
 		return 1;
 	}
 	if (argc > 2){
-		printf("Muitos argumentos.\n");
-		printf("Favor digitar o nome do disco a ser inicializado\n");
+		hreset_help();
 		return 1;
 	}
-	// TODO: Validar os parametros passados pelo usuário
-	// TODO: Criar help caso parametros sejam passados errados
-	// DONE.
 	
 	if ( (fp = fopen(argv[1], "r")) == NULL ){
-		printf("Disco inexistente.\n");
+		printf("Disco inexistente.\n\n");
+		hreset_help();
         	return 1;
 	}
 	
 	if ( !(fread(validar, 1, 1024, fp)) ){
-		printf("Erro na leitura do disco.");
+		printf("Erro na leitura do disco.\n\n");
 		return 1;
 	}
 
