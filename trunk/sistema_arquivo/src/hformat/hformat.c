@@ -19,6 +19,7 @@
 #define SIZE_SEC 512						/**< Tamanho de segmento em bytes a ser utilizado no sistema de arquivos. */
 #define MIN_DISK_SIZE ( 512 * SIZE_SEC )	/**< Tamanho mínimo em bytes que um disco a ser formatado deve ter. */
 #define MAX_DISK_SIZE ( 4096 * SIZE_SEC )	/**< Tamanho máximo em bytes que um disco a ser formatado poderá ter. */
+#define TAM_BOOT 2
 
 char DISK_NAME[255];	/**< Nome do disco. */
 FILE *disk;				/**< Arquivo onde está o disco. */
@@ -44,31 +45,15 @@ enum {
  * @todo Adicionar tratamento de erros.
  */
 int save_boot(short int tam_hpsys) {
-	FILE *boot_file;											/* Arquivo contendo o boot. */
-	char boot_content[SIZE_SEC*2];								/* Buffer da transferência do boot de seu arquivo original para o seu destino em disco. */
-	struct stat info_boot;										/* Estado do arquivo do setor de boot. */
-	short int end_bitmap = (tam_hpsys+2)*SIZE_SEC;
+	short int end_bitmap = (tam_hpsys+TAM_BOOT)*SIZE_SEC;
 	char marcadores_boot;
 
 	debug("save_boot()");
-	/* verifica se é possível abrir o arquivo de boot */
-	if ( (boot_file = fopen(BOOT_PATH, "r")) == NULL ) {
-		char error_msg[100]; /* Irá conter a mensagem de erro */
-		sprintf(error_msg, "Não foi possivel abrir o arquivo %s", BOOT_PATH);
-		print_error("0x666", error_msg, 1);
-	}
-	fseek(disk, 0, SEEK_SET);
-	stat(BOOT_PATH, &info_boot);
-	/* verifica se o tamanho do boot a ser caregado corresponde ao tamanho de dois setores */
-	/*if (info_boot.st_size > 2*SIZE_SEC) {
-		print_error("0x005", "Tamanho do boot maior que 2 setores", 1);
-	}*/ 														// TODO: Comentando até achar uma solução melhor pro boot.bin
-	fread(boot_content, sizeof(char), SIZE_SEC*2, boot_file);	//TODO: Tratar erro
-	fwrite(boot_content, sizeof(char), SIZE_SEC*2, disk);		//TODO: Tratar erro
-	fclose(boot_file);
+	
+	fwrite(HFORMAT, sizeof(char)*2000, 1, disk);		//TODO: Tratar erro
 
 	/* Grava o código do boot e o tamanho do hpsys */
-	fseek(disk, (2*SIZE_SEC)-2*sizeof(short int)-2*sizeof(char), SEEK_SET);
+	fseek(disk, (TAM_BOOT*SIZE_SEC)-2*sizeof(short int)-2*sizeof(char), SEEK_SET);
 	fwrite(&end_bitmap, sizeof(short int), 1, disk);			/* Endereço de início do bitmap de setores livres */ //TODO: Tratar erro
 	fwrite(&tam_hpsys, sizeof(short int), 1, disk);				/* Número de setores do SO */ //TODO: Tratar erro
 	
@@ -80,6 +65,43 @@ int save_boot(short int tam_hpsys) {
 	
 	debug("BOOT salvo");
 	return 0;
+	
+// 	FILE *boot_file;											/* Arquivo contendo o boot. */
+// 	char boot_content[SIZE_SEC*TAM_BOOT];						/* Buffer da transferência do boot de seu arquivo original para o seu destino em disco. */
+// 	struct stat info_boot;										/* Estado do arquivo do setor de boot. */
+// 	short int end_bitmap = (tam_hpsys+TAM_BOOT)*SIZE_SEC;
+// 	char marcadores_boot;
+// 
+// 	debug("save_boot()");
+// 	/* verifica se é possível abrir o arquivo de boot */
+// 	if ( (boot_file = fopen(BOOT_PATH, "r")) == NULL ) {
+// 		char error_msg[100]; /* Irá conter a mensagem de erro */
+// 		sprintf(error_msg, "Não foi possivel abrir o arquivo %s", BOOT_PATH);
+// 		print_error("0x666", error_msg, 1);
+// 	}
+// 	fseek(disk, 0, SEEK_SET);
+// 	stat(BOOT_PATH, &info_boot);
+// 	/* verifica se o tamanho do boot a ser caregado corresponde ao tamanho de dois setores */
+// 	/*if (info_boot.st_size > 2*SIZE_SEC) {
+// 		print_error("0x005", "Tamanho do boot maior que 2 setores", 1);
+// 	}*/ 														// TODO: Comentando até achar uma solução melhor pro boot.bin
+// 	fread(boot_content, sizeof(char), SIZE_SEC*TAM_BOOT, boot_file);	//TODO: Tratar erro
+// 	fwrite(boot_content, sizeof(char), SIZE_SEC*TAM_BOOT, disk);		//TODO: Tratar erro
+// 	fclose(boot_file);
+// 
+// 	/* Grava o código do boot e o tamanho do hpsys */
+// 	fseek(disk, (2*SIZE_SEC)-2*sizeof(short int)-2*sizeof(char), SEEK_SET);
+// 	fwrite(&end_bitmap, sizeof(short int), 1, disk);			/* Endereço de início do bitmap de setores livres */ //TODO: Tratar erro
+// 	fwrite(&tam_hpsys, sizeof(short int), 1, disk);				/* Número de setores do SO */ //TODO: Tratar erro
+// 	
+// 	// Grava os marcadores do final do boot
+// 	marcadores_boot = BOOT1;
+// 	fwrite(&marcadores_boot, sizeof(char), 1, disk);			//TODO: Tratar erro
+// 	marcadores_boot = BOOT2;
+// 	fwrite(&marcadores_boot, sizeof(char), 1, disk);			//TODO: Tratar erro
+// 	
+// 	debug("BOOT salvo");
+// 	return 0;
 }
 
 /**
@@ -173,8 +195,6 @@ int save_root(short int tam_hpsys) {
 	// Salva mapa de páginas do root
 	fseek(disk, desc_raiz.mapa_pag, SEEK_SET);
 	fwrite(&raiz, sizeof(struct mapa_paginas_diretorio), 1, disk);
-	
-	//TODO: AJUSTAR SIZEOF'S
 	
 	debug("root salvo");
 	return 0;
@@ -317,6 +337,53 @@ void filter_argv(int argc, char **argv) {
 }
 
 /**
+ * @brief Checa o tamanho das estruturas internas do sistema de arquivos.
+ * 
+ * Garante que se o tamanho esperado para as estruturas internas do sistema de arquivos estiver errado, o disco nao sera formatado.
+ * 
+ */
+void low_level_size_check() {
+	char str_erro[200] = "";
+	char erro = 0;
+
+	if (sizeof(endereco_disco) != TAM_ENDERECO_DISCO) {
+		strcat(str_erro, "Tamanho dos enderecos do disco");
+		erro = 1;
+	}
+	
+	if (sizeof(struct descritor_arquivo) != TAM_DESCRITOR_ARQUIVO) {
+		if (erro)
+			strcat(str_erro, ",");
+		else
+			strcat(str_erro, "Tamanho");
+		strcat(str_erro, " dos descritores de arquivos");
+		erro = 1;
+	}
+	
+	if (sizeof(struct mapa_paginas_arquivo) != SIZE_SEC) {
+		if (erro)
+			strcat(str_erro, ",");
+		else
+			strcat(str_erro, "Tamanho");
+		strcat(str_erro, " dos mapas de paginas de arquivo");
+		erro = 1;
+	}
+	
+	if (sizeof(struct mapa_paginas_diretorio) != SIZE_SEC) {
+		if (erro)
+			strcat(str_erro, ",");
+		else
+			strcat(str_erro, "Tamanho");
+		strcat(str_erro, " dos mapas de paginas de diretorio");
+		erro = 1;
+	}
+	
+	if (erro)
+		strcat(str_erro, " invalidos.");
+		print_error("0x51", str_erro, 1);
+}
+
+/**
  * @brief Chama as subrotinas e verifica se os parâmetros foram passados corretamente.
  * @param argc Número de parâmetros passados pela linha de comando.
  * @param argv Strings passadas pela linha de comando.
@@ -324,6 +391,8 @@ void filter_argv(int argc, char **argv) {
  */
 int main(int argc, char *argv[]) {
 	filter_argv(argc, argv);
+
+	//low_level_size_check();
 
 	format_disk();
 	fclose(disk);
